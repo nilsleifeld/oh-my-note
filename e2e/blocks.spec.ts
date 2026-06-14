@@ -330,6 +330,185 @@ test.describe("Tastatur-Interaktionen", () => {
   });
 });
 
+test.describe("Toggle-Block", () => {
+  test.beforeEach(async ({ page }) => {
+    await gotoApp(page);
+  });
+
+  test("erstellt Toggle-Block mit Chevron-Button", async ({ page }) => {
+    await addBlock(page, "toggle");
+
+    const block = blocks(page, "toggle").first();
+    await expect(block).toHaveClass(/block--toggle/);
+    await expect(block.locator(".block__toggle")).toBeVisible();
+    await expect(block.locator(".block__toggle")).toHaveClass(
+      /block__toggle--open/,
+    );
+  });
+
+  test("klappt verschachtelte Kinder auf und zu", async ({ page }) => {
+    const today = todayISO();
+    await gotoAppWithBlocks(page, [
+      {
+        id: "toggle-parent",
+        type: "toggle",
+        parentId: null,
+        day: today,
+        createdAt: `${today}T10:00:00.000Z`,
+        content: ["toggle-child"],
+        properties: {
+          title: "Abschnitt",
+          checked: false,
+          language: "",
+          imageData: "",
+          open: true,
+        },
+      },
+      {
+        id: "toggle-child",
+        type: "text",
+        parentId: "toggle-parent",
+        day: today,
+        createdAt: `${today}T10:30:00.000Z`,
+        content: [],
+        properties: {
+          title: "Detail",
+          checked: false,
+          language: "",
+          imageData: "",
+          open: true,
+        },
+      },
+    ]);
+
+    const parent = blocks(page, "toggle").first();
+    await expect(nestedBlocks(parent, "text")).toHaveCount(1);
+    await expect(blockInput(nestedBlocks(parent, "text").first())).toHaveValue(
+      "Detail",
+    );
+
+    const toggle = parent.locator(".block__toggle");
+    await expect(toggle).toHaveClass(/block__toggle--open/);
+
+    await toggle.click();
+    await expect(toggle).toHaveClass(/block__toggle--closed/);
+    await expect(parent.locator("> .block__children")).toHaveCount(0);
+
+    await toggle.click();
+    await expect(toggle).toHaveClass(/block__toggle--open/);
+    await expect(nestedBlocks(parent, "text")).toHaveCount(1);
+  });
+
+  test("speichert open-Zustand nach Reload", async ({ page }) => {
+    const today = todayISO();
+    await gotoAppWithBlocks(page, [
+      {
+        id: "toggle-parent",
+        type: "toggle",
+        parentId: null,
+        day: today,
+        createdAt: `${today}T10:00:00.000Z`,
+        content: ["toggle-child"],
+        properties: {
+          title: "Abschnitt",
+          checked: false,
+          language: "",
+          imageData: "",
+          open: true,
+        },
+      },
+      {
+        id: "toggle-child",
+        type: "text",
+        parentId: "toggle-parent",
+        day: today,
+        createdAt: `${today}T10:30:00.000Z`,
+        content: [],
+        properties: {
+          title: "Detail",
+          checked: false,
+          language: "",
+          imageData: "",
+          open: true,
+        },
+      },
+    ]);
+
+    const parent = blocks(page, "toggle").first();
+    const toggle = parent.locator(".block__toggle");
+    await expect(nestedBlocks(parent, "text")).toHaveCount(1);
+
+    await toggle.click();
+    await expect(parent.locator("> .block__children")).toHaveCount(0);
+
+    await reloadApp(page);
+
+    const reloaded = blocks(page, "toggle").first();
+    await expect(reloaded.locator(".block__toggle")).toHaveClass(
+      /block__toggle--closed/,
+    );
+    await expect(reloaded.locator("> .block__children")).toHaveCount(0);
+
+    const stored = await getStoredBlock(page, "toggle-parent");
+    expect(stored?.properties.open).toBe(false);
+  });
+
+  test("andere Block-Typen haben keinen Toggle-Button", async ({ page }) => {
+    await addBlock(page, "text");
+    await addBlock(page, "text");
+    await fillBlock(blocks(page, "text").first(), "Parent");
+    await fillBlock(blocks(page, "text").nth(1), "Child");
+    await pressInBlock(blocks(page, "text").nth(1), "Tab");
+
+    const parent = blocks(page, "text").first();
+    await expect(parent.locator(".block__toggle")).toHaveCount(0);
+    await expect(nestedBlocks(parent, "text")).toHaveCount(1);
+  });
+
+  test("Text-Kinder bleiben sichtbar unabhängig von open", async ({ page }) => {
+    const today = todayISO();
+    await gotoAppWithBlocks(page, [
+      {
+        id: "text-parent",
+        type: "text",
+        parentId: null,
+        day: today,
+        createdAt: `${today}T10:00:00.000Z`,
+        content: ["text-child"],
+        properties: {
+          title: "Parent",
+          checked: false,
+          language: "",
+          imageData: "",
+          open: false,
+        },
+      },
+      {
+        id: "text-child",
+        type: "text",
+        parentId: "text-parent",
+        day: today,
+        createdAt: `${today}T10:30:00.000Z`,
+        content: [],
+        properties: {
+          title: "Child",
+          checked: false,
+          language: "",
+          imageData: "",
+          open: true,
+        },
+      },
+    ]);
+
+    const parent = blocks(page, "text").first();
+    await expect(parent.locator(".block__toggle")).toHaveCount(0);
+    await expect(nestedBlocks(parent, "text")).toHaveCount(1);
+    await expect(blockInput(nestedBlocks(parent, "text").first())).toHaveValue(
+      "Child",
+    );
+  });
+});
+
 test.describe("Löschen", () => {
   test.beforeEach(async ({ page }) => {
     await gotoApp(page);
@@ -381,6 +560,7 @@ test.describe("Drag & Drop", () => {
           checked: false,
           language: "",
           imageData: "",
+          open: true,
         },
       },
       {
@@ -395,6 +575,7 @@ test.describe("Drag & Drop", () => {
           checked: false,
           language: "",
           imageData: "",
+          open: true,
         },
       },
     ]);
@@ -430,6 +611,7 @@ test.describe("Drag & Drop", () => {
           checked: false,
           language: "",
           imageData: "",
+          open: true,
         },
       },
       {
@@ -444,6 +626,7 @@ test.describe("Drag & Drop", () => {
           checked: false,
           language: "",
           imageData: "",
+          open: true,
         },
       },
     ]);

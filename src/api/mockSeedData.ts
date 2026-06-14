@@ -25,6 +25,7 @@ function seedBlock(def: BlockSeed): Block {
       checked: def.checked ?? false,
       language: def.language ?? "",
       imageData: "",
+      open: true,
     },
   };
 }

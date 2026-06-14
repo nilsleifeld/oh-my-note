@@ -39,6 +39,13 @@ export function buildToggleChange(block: Block, checked: boolean): BlockChange {
   return buildPropertyChange(block, { checked });
 }
 
+export function buildToggleOpenChange(
+  block: Block,
+  open: boolean,
+): BlockChange {
+  return buildPropertyChange(block, { open });
+}
+
 export function buildTypeChange(block: Block, type: BlockType): BlockChange {
   const snapshot = cloneBlock(block);
   const update = { ...cloneBlock(block), type };

@@ -15,6 +15,7 @@ const BLOCK_TYPES = new Set<BlockType>([
   "text",
   "code",
   "image",
+  "toggle",
   "h1",
   "h2",
   "h3",

@@ -10,6 +10,7 @@ export function isHeadingBlockType(type: BlockType): boolean {
 export const blockPlaceholders: Record<Block["type"], string> = {
   text: "Empty text block",
   todo: "To-do",
+  toggle: "Toggle",
   code: "Code",
   image: "Image",
   h1: "Heading 1",
@@ -27,6 +28,7 @@ export const blockTypeOptions: SelectOption[] = [
   { value: "h5", label: "Heading 5" },
   { value: "text", label: "Text" },
   { value: "todo", label: "To-do" },
+  { value: "toggle", label: "Toggle" },
   { value: "code", label: "Code" },
   { value: "image", label: "Image" },
 ];
@@ -58,6 +60,12 @@ export function createChildBlock(
     day: opts.day,
     createdAt: opts.createdAt,
     content: [],
-    properties: { title: "", checked: false, language: "", imageData: "" },
+    properties: {
+      title: "",
+      checked: false,
+      language: "",
+      imageData: "",
+      open: true,
+    },
   };
 }

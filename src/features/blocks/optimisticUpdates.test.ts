@@ -77,6 +77,7 @@ describe("blockCacheState", () => {
         checked: false,
         language: "",
         imageData: "",
+        open: true,
       },
     });
     expect(updated[1].properties.title).toBe("changed");

@@ -5,6 +5,7 @@ export type BlockType =
   | "text"
   | "code"
   | "image"
+  | "toggle"
   | "h1"
   | "h2"
   | "h3"
@@ -17,6 +18,8 @@ export type BlockProperties = {
   language: string;
   /** Base64 data URL, e.g. `data:image/png;base64,...` */
   imageData: string;
+  /** Whether child blocks are expanded in the UI */
+  open: boolean;
 };
 
 export type Block = {

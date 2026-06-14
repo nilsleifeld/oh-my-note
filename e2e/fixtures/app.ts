@@ -19,6 +19,7 @@ const SENTINEL_BLOCKS = [
       checked: false,
       language: "",
       imageData: "",
+      open: true,
     },
   },
 ];
@@ -26,6 +27,7 @@ const SENTINEL_BLOCKS = [
 export type BlockType =
   | "text"
   | "todo"
+  | "toggle"
   | "code"
   | "image"
   | "h1"
@@ -48,6 +50,7 @@ export type SeedBlock = {
     checked: boolean;
     language: string;
     imageData: string;
+    open: boolean;
   };
 };
 
@@ -224,6 +227,7 @@ export async function changeBlockType(block: Locator, type: BlockType) {
     h5: "Heading 5",
     text: "Text",
     todo: "To-do",
+    toggle: "Toggle",
     code: "Code",
     image: "Image",
   };

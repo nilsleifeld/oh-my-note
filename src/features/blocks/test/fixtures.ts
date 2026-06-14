@@ -18,6 +18,7 @@ export function makeBlock(
       checked: false,
       language: "",
       imageData: "",
+      open: true,
       ...propOverrides,
     },
     ...rest,

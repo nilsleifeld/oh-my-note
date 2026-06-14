@@ -15,6 +15,7 @@ export function normalizeBlock(block: Block): Block {
       checked: block.properties?.checked ?? false,
       language: block.properties?.language ?? "",
       imageData: block.properties?.imageData ?? "",
+      open: block.properties?.open ?? true,
     },
   };
 }

@@ -10,6 +10,7 @@ import { HeadingBlock } from "./HeadingBlock";
 import { ImageBlock } from "./ImageBlock";
 import { TextBlock } from "./TextBlock";
 import { TodoBlock } from "./TodoBlock";
+import { ToggleBlock } from "./ToggleBlock";
 
 export function BlockRow({
   blockId,
@@ -65,6 +66,9 @@ export function BlockRow({
   };
 
   const childIds = uniqueIds(pendingContent?.(block.id) ?? block.content);
+  const hasChildren = childIds.length > 0;
+  const showChildren =
+    hasChildren && (block.type !== "toggle" || block.properties.open);
 
   return (
     <div
@@ -89,6 +93,7 @@ export function BlockRow({
         />
         {block.type === "text" ? <TextBlock {...contentProps} /> : null}
         {block.type === "todo" ? <TodoBlock {...contentProps} /> : null}
+        {block.type === "toggle" ? <ToggleBlock {...contentProps} /> : null}
         {block.type === "code" ? <CodeBlock {...contentProps} /> : null}
         {block.type === "image" ? (
           <ImageBlock
@@ -112,7 +117,7 @@ export function BlockRow({
           ×
         </button>
       </div>
-      {childIds.length > 0 ? (
+      {showChildren ? (
         <div className="block__children">
           {childIds.map((childId) => (
             <BlockRow
