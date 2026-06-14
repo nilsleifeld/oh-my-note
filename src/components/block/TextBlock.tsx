@@ -47,6 +47,7 @@ export function TextBlock(props: BlockContentProps) {
       inputClass="block__input block__input--multiline"
       onEnter={props.onEnter}
       onBackspaceEmpty={props.onBackspaceEmpty}
+      onBackspaceAtStart={props.onBackspaceEmpty}
       onIndent={props.onIndent}
       onOutdent={props.onOutdent}
       shouldFocus={props.shouldFocus}

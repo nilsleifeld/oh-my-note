@@ -287,6 +287,18 @@ test.describe("Block-Typ wechseln", () => {
     ).not.toBeChecked();
   });
 
+  test("Backspace am Zeilenanfang löscht Textblock", async ({ page }) => {
+    const block = blocks(page, "text").first();
+    await fillBlock(block, "Inhalt");
+
+    const input = blockInput(block);
+    await input.click();
+    await input.press("Home");
+    await input.press("Backspace");
+
+    await expect(blocks(page, "text")).toHaveCount(0);
+  });
+
   test("wechselt To-do → Text", async ({ page }) => {
     const block = blocks(page, "text").first();
     await changeBlockType(block, "todo");
