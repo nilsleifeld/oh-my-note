@@ -67,6 +67,20 @@ export function buildBulletShortcutChange(
   return { snapshot: [snapshot], updates: [update] };
 }
 
+export function buildTodoShortcutChange(
+  block: Block,
+  title: string,
+): BlockChange {
+  const snapshot = cloneBlock(block);
+  const update = {
+    ...cloneBlock(block),
+    type: "todo" as const,
+    properties: { ...block.properties, title, checked: false },
+  };
+
+  return { snapshot: [snapshot], updates: [update] };
+}
+
 export function buildImagePasteChange(
   block: Block,
   imageData: string,

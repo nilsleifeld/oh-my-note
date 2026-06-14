@@ -248,6 +248,23 @@ test.describe("Block-Typ wechseln", () => {
     ).toBeVisible();
   });
 
+  test('"[] " wandelt Textblock in To-do um', async ({ page }) => {
+    const block = blocks(page, "text").first();
+    const input = blockInput(block);
+    await input.click();
+    await input.pressSequentially("[] ", { delay: 50 });
+
+    await expect(blocks(page, "text")).toHaveCount(0);
+    await expect(blocks(page, "todo")).toHaveCount(1);
+    await expect(blockInput(blocks(page, "todo").first())).toHaveValue("");
+    await expect(
+      blocks(page, "todo").first().locator(".block__checkbox"),
+    ).toBeVisible();
+    await expect(
+      blocks(page, "todo").first().locator(".block__checkbox"),
+    ).not.toBeChecked();
+  });
+
   test("wechselt To-do → Text", async ({ page }) => {
     const block = blocks(page, "text").first();
     await changeBlockType(block, "todo");
