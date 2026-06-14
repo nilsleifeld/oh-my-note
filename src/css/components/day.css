@@ -1,0 +1,95 @@
+@layer components {
+  .day__inner {
+    max-width: calc(var(--spacing) * 180);
+    margin: 0 auto;
+    padding: calc(var(--spacing) * 2) calc(var(--spacing) * 4)
+      calc(var(--spacing) * 4);
+  }
+
+  .day:first-child .day__inner {
+    padding-top: calc(var(--spacing) * 1);
+  }
+
+  .day__placeholder {
+    max-width: calc(var(--spacing) * 180);
+    margin: 0 auto;
+    padding: calc(var(--spacing) * 12) calc(var(--spacing) * 12);
+    font-size: var(--text-sm);
+    color: var(--ln-muted-foreground);
+  }
+
+  .day__error {
+    max-width: calc(var(--spacing) * 180);
+    margin: 0 auto;
+    padding: calc(var(--spacing) * 12) calc(var(--spacing) * 12);
+    font-size: var(--text-sm);
+    color: var(--ln-destructive);
+  }
+
+  .day__header {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: calc(var(--spacing) * 8);
+    padding-block: calc(var(--spacing) * 1);
+    background: var(--ln-background);
+  }
+
+  .day__header-line {
+    display: flex;
+    align-items: center;
+    gap: calc(var(--spacing) * 4);
+    width: 100%;
+  }
+
+  .day__divider {
+    flex: 1;
+    height: 1px;
+    background: var(--ln-border);
+  }
+
+  .day__date {
+    flex-shrink: 0;
+    font-size: var(--text-sm);
+    color: var(--ln-muted-foreground);
+  }
+
+  .day__blocks {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .day__blocks > .block {
+    margin-bottom: calc(var(--spacing) * 1);
+  }
+
+  .day__blocks > .block:last-child {
+    margin-bottom: 0;
+  }
+
+  .day__blocks omn-block-row {
+    display: block;
+  }
+
+  .day__empty {
+    align-self: center;
+    padding: calc(var(--spacing) * 3) calc(var(--spacing) * 2);
+    border: none;
+    border-radius: var(--radius);
+    background: transparent;
+    font: inherit;
+    font-size: var(--text-sm);
+    color: var(--ln-muted-foreground);
+    cursor: pointer;
+    text-align: center;
+  }
+
+  .day__empty:hover {
+    color: var(--ln-foreground);
+    background: var(--ln-accent);
+  }
+}

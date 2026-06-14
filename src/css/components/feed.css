@@ -1,0 +1,24 @@
+@layer components {
+  .feed {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    background: var(--ln-background);
+  }
+
+  .feed__status {
+    max-width: calc(var(--spacing) * 180);
+    margin: 0 auto;
+    padding: calc(var(--spacing) * 16) calc(var(--spacing) * 12);
+    font-size: var(--text-sm);
+    color: var(--ln-muted-foreground);
+  }
+
+  .feed__status--error {
+    color: var(--ln-destructive);
+  }
+
+  .feed__sentinel {
+    min-height: calc(var(--spacing) * 8);
+  }
+}

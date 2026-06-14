@@ -1,0 +1,54 @@
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { getApiClient } from "../../../api/client";
+import type { BlockSortBy } from "../../../types/models";
+import { queryKeys } from "../../../lib/query/queryKeys";
+import { seedBlockQueries } from "../../blocks/cache/blockCache";
+
+const defaultSortBy: BlockSortBy = { field: "createdAt", order: "asc" };
+
+type UseDayRootBlocksOptions = {
+  enabled?: boolean;
+  page?: number;
+  pageSize?: number;
+  sortBy?: BlockSortBy;
+};
+
+export function useDayRootBlocks(
+  date: string,
+  options: UseDayRootBlocksOptions = {},
+) {
+  const queryClient = useQueryClient();
+  const client = getApiClient();
+  const enabled = options.enabled ?? true;
+  const sortBy = options.sortBy ?? defaultSortBy;
+  const { page, pageSize } = options;
+
+  const isDefaultSort =
+    sortBy.field === defaultSortBy.field &&
+    sortBy.order === defaultSortBy.order;
+
+  const queryKey =
+    page === undefined && pageSize === undefined && isDefaultSort
+      ? queryKeys.day(date)
+      : queryKeys.day(date, { sortBy, page, pageSize });
+
+  return useQuery({
+    queryKey,
+    enabled,
+    queryFn: async () => {
+      const result = await client.getBlocks({
+        parentId: null,
+        day: date,
+        page,
+        pageSize,
+        sortBy,
+      });
+
+      if (page === undefined && pageSize === undefined) {
+        seedBlockQueries(queryClient, result.items);
+      }
+
+      return result.items;
+    },
+  });
+}

@@ -1,0 +1,50 @@
+{
+  "name": "oh-my-note",
+  "version": "0.0.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nilsleifeld/oh-my-note.git"
+  },
+  "bugs": {
+    "url": "https://github.com/nilsleifeld/oh-my-note/issues"
+  },
+  "homepage": "https://github.com/nilsleifeld/oh-my-note#readme",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "check": "tsc --noEmit -p tsconfig.check.json",
+    "build": "npm run check && vite build",
+    "preview": "vite preview",
+    "format": "prettier --write .",
+    "test:js": "tsc --noEmit -p tsconfig.check.json",
+    "test:lint": "eslint .",
+    "test:format": "prettier --check .",
+    "test:unit": "vitest run",
+    "test:unit:watch": "vitest",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test": "npm run test:js && npm run test:lint && npm run test:format && npm run test:unit && npm run test:e2e"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.60.0",
+    "@types/node": "^25.9.3",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.2",
+    "eslint": "^10.5.0",
+    "eslint-config-prettier": "^10.1.8",
+    "globals": "^17.6.0",
+    "prettier": "^3.8.4",
+    "typescript": "~6.0.2",
+    "typescript-eslint": "^8.61.0",
+    "vite": "^8.0.12",
+    "vitest": "^4.1.8"
+  },
+  "dependencies": {
+    "@tanstack/react-query": "^5.101.0",
+    "highlight.js": "^11.11.1",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7"
+  }
+}

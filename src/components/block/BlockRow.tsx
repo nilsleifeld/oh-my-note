@@ -1,0 +1,141 @@
+import type { BlockRowProps } from "../../types/ui";
+import { isHeadingBlockType } from "../../data/blocks";
+import { uniqueIds } from "../../utils/list";
+import { useBlockQuery } from "../../features/blocks/queries/useBlockQuery";
+import { useDeleteBlock } from "../../features/blocks/mutations/useDeleteBlock";
+import { BlockHandle, BlockTypeSelect } from "./BlockHandle";
+import { Skeleton } from "../ui/Skeleton";
+import { CodeBlock } from "./CodeBlock";
+import { HeadingBlock } from "./HeadingBlock";
+import { ImageBlock } from "./ImageBlock";
+import { TextBlock } from "./TextBlock";
+import { TodoBlock } from "./TodoBlock";
+
+export function BlockRow({
+  blockId,
+  date,
+  rootKey,
+  rootIds,
+  dragState,
+  pendingContent,
+  onDragStart,
+  onDragOver,
+  onDrop,
+  onDragEnd,
+  focusId,
+  onFocused,
+  onAddBelow,
+  onIndent,
+  onOutdent,
+}: BlockRowProps) {
+  const query = useBlockQuery(blockId);
+  const deleteBlock = useDeleteBlock(date, () => rootIds);
+
+  if (query.isLoading) {
+    return (
+      <div className="block block--loading" data-block-id={blockId}>
+        <div className="block__row">
+          <Skeleton className="skeleton--block-row" />
+        </div>
+      </div>
+    );
+  }
+
+  const block = query.data;
+  if (!block) return null;
+
+  const remove = () => deleteBlock.mutate(blockId);
+
+  let className = `block block--${block.type}`;
+  if (block.type === "todo" && block.properties.checked) {
+    className += " block--todo-checked";
+  }
+  if (dragState.draggingId === blockId) className += " block--dragging";
+  if (dragState.overId === blockId) className += " block--over";
+
+  const contentProps = {
+    blockId,
+    block,
+    onEnter: () => onAddBelow(block.type, blockId),
+    onBackspaceEmpty: remove,
+    onIndent: () => onIndent(blockId),
+    onOutdent: () => onOutdent(blockId),
+    shouldFocus: focusId === blockId,
+    onFocused,
+  };
+
+  const childIds = uniqueIds(pendingContent?.(block.id) ?? block.content);
+
+  return (
+    <div
+      className={className}
+      data-block-id={blockId}
+      onDragOver={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        onDragOver(blockId);
+      }}
+      onDrop={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        onDrop(blockId);
+      }}
+    >
+      <div className="block__row">
+        <BlockHandle
+          blockId={blockId}
+          onDragStart={onDragStart}
+          onDragEnd={onDragEnd}
+        />
+        {block.type === "text" ? <TextBlock {...contentProps} /> : null}
+        {block.type === "todo" ? <TodoBlock {...contentProps} /> : null}
+        {block.type === "code" ? <CodeBlock {...contentProps} /> : null}
+        {block.type === "image" ? (
+          <ImageBlock
+            {...contentProps}
+            onEnter={() => onAddBelow("text", blockId)}
+          />
+        ) : null}
+        {isHeadingBlockType(block.type) ? (
+          <HeadingBlock
+            {...contentProps}
+            onEnter={() => onAddBelow("text", blockId)}
+          />
+        ) : null}
+        <BlockTypeSelect block={block} blockId={blockId} />
+        <button
+          className="block__delete"
+          type="button"
+          title="Delete"
+          onClick={remove}
+        >
+          ×
+        </button>
+      </div>
+      {childIds.length > 0 ? (
+        <div className="block__children">
+          {childIds.map((childId) => (
+            <BlockRow
+              key={childId}
+              blockId={childId}
+              date={date}
+              rootKey={rootKey}
+              rootIds={rootIds}
+              dragState={dragState}
+              pendingContent={pendingContent}
+              onDragStart={onDragStart}
+              onDragOver={onDragOver}
+              onDrop={onDrop}
+              onDragEnd={onDragEnd}
+              focusId={focusId}
+              onFocused={onFocused}
+              onAddBelow={onAddBelow}
+              onIndent={onIndent}
+              onOutdent={onOutdent}
+            />
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
+}

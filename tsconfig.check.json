@@ -1,0 +1,8 @@
+{
+  "extends": "./tsconfig.json",
+  "include": ["src", "e2e", "playwright.config.ts"],
+  "exclude": ["src/**/*.test.ts", "src/**/test/**"],
+  "compilerOptions": {
+    "types": ["vite/client", "@playwright/test", "node"]
+  }
+}

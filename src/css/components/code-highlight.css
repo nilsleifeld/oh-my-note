@@ -1,0 +1,112 @@
+@layer components {
+  .block__code-editor {
+    position: relative;
+    align-self: stretch;
+  }
+
+  .block__code-highlight {
+    position: absolute;
+    inset: 0;
+    margin: 0;
+    padding: calc(var(--spacing) * 1.5) 0;
+    overflow: hidden;
+    pointer-events: none;
+    white-space: pre-wrap;
+    word-break: break-word;
+    font-family:
+      ui-monospace, "Cascadia Code", "Source Code Pro", Menlo, monospace;
+    font-size: var(--text-sm);
+    line-height: var(--text-sm--line-height);
+    tab-size: 2;
+  }
+
+  .block__code-highlight code {
+    display: block;
+    padding: 0;
+    background: none;
+    font: inherit;
+    line-height: inherit;
+    tab-size: inherit;
+    white-space: inherit;
+    word-break: inherit;
+  }
+
+  .block__code-highlight .hljs {
+    background: transparent;
+    color: var(--ln-foreground);
+  }
+
+  .block__code-editor .block__input--code {
+    position: relative;
+    z-index: 1;
+    color: transparent;
+    caret-color: var(--ln-foreground);
+    -webkit-text-fill-color: transparent;
+  }
+
+  .block__code-editor .block__input--code::selection {
+    background: var(--ln-code-selection);
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .hljs-comment,
+  .hljs-quote {
+    color: var(--ln-code-comment);
+  }
+
+  .hljs-keyword,
+  .hljs-selector-tag,
+  .hljs-literal,
+  .hljs-section,
+  .hljs-link {
+    color: var(--ln-code-keyword);
+  }
+
+  .hljs-string,
+  .hljs-regexp,
+  .hljs-addition,
+  .hljs-attribute {
+    color: var(--ln-code-string);
+  }
+
+  .hljs-number,
+  .hljs-symbol,
+  .hljs-bullet {
+    color: var(--ln-code-number);
+  }
+
+  .hljs-title,
+  .hljs-title.class_,
+  .hljs-title.function_,
+  .hljs-function .hljs-title {
+    color: var(--ln-code-function);
+  }
+
+  .hljs-variable,
+  .hljs-template-variable,
+  .hljs-params {
+    color: var(--ln-code-variable);
+  }
+
+  .hljs-type,
+  .hljs-built_in,
+  .hljs-class .hljs-title {
+    color: var(--ln-code-type);
+  }
+
+  .hljs-meta,
+  .hljs-meta .hljs-keyword {
+    color: var(--ln-code-meta);
+  }
+
+  .hljs-name,
+  .hljs-tag,
+  .hljs-attr {
+    color: var(--ln-code-attr);
+  }
+
+  .hljs-deletion {
+    color: var(--ln-destructive);
+  }
+}

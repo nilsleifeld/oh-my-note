@@ -1,0 +1,22 @@
+@layer base {
+  * {
+    border-color: var(--ln-border);
+    outline-color: rgba(var(--ln-ring), 0.5);
+  }
+
+  html {
+    font-size: 14px;
+    font-family:
+      system-ui,
+      -apple-system,
+      "Segoe UI",
+      Roboto,
+      Helvetica,
+      Arial,
+      "Apple Color Emoji",
+      "Segoe UI Emoji",
+      sans-serif;
+    background-color: var(--ln-background);
+    color: var(--ln-foreground);
+  }
+}

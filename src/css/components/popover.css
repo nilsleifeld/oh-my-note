@@ -1,0 +1,37 @@
+@layer components {
+  .popover {
+    position: relative;
+    display: inline-flex;
+    max-width: 100%;
+  }
+
+  .popover__panel {
+    position: absolute;
+    top: calc(100% + var(--spacing));
+    left: 0;
+    z-index: 20;
+    min-width: calc(var(--spacing) * 32);
+    overflow: hidden;
+    border: 1px solid var(--ln-border);
+    border-radius: var(--radius);
+    background: var(--ln-background);
+    box-shadow:
+      0 calc(var(--spacing) * 1) calc(var(--spacing) * 3)
+        hsl(var(--foreground) / 0.08),
+      0 calc(var(--spacing) * 4) calc(var(--spacing) * 8)
+        hsl(var(--foreground) / 0.06);
+    opacity: 0;
+    transform: translateY(calc(var(--spacing) * -1)) scale(0.98);
+    transform-origin: top left;
+    pointer-events: none;
+    transition:
+      opacity 0.16s ease,
+      transform 0.16s ease;
+  }
+
+  .popover--open .popover__panel {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    pointer-events: auto;
+  }
+}
