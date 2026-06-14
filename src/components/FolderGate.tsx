@@ -1,57 +1,99 @@
 type FolderGateProps = {
   state: "pick" | "unsupported" | "error";
   message?: string;
+  showPermissionHint?: boolean;
   onSelectFolder: () => void;
 };
+
+function FolderIcon() {
+  return (
+    <svg
+      className="folder-gate__icon"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M3 7.5A1.5 1.5 0 0 1 4.5 6h4.19a1.5 1.5 0 0 1 1.06.44l1.06 1.06A1.5 1.5 0 0 0 11.87 8H19.5A1.5 1.5 0 0 1 21 9.5v8A1.5 1.5 0 0 1 19.5 19h-15A1.5 1.5 0 0 1 3 17.5z" />
+    </svg>
+  );
+}
+
+function PermissionSteps() {
+  return (
+    <ol className="folder-gate__steps">
+      <li>Click the button below</li>
+      <li>Select your notes folder in the dialog</li>
+      <li>
+        When your browser asks for access, choose <strong>Allow</strong>
+      </li>
+    </ol>
+  );
+}
 
 export function FolderGate({
   state,
   message,
+  showPermissionHint = false,
   onSelectFolder,
 }: FolderGateProps) {
   return (
     <div className="folder-gate">
       <div className="folder-gate__card">
-        <h1 className="folder-gate__title">oh-my-note</h1>
+        <div className="folder-gate__badge">
+          <FolderIcon />
+        </div>
 
-        {state === "pick" ? (
-          <>
-            <p className="folder-gate__text">
-              Wähle einen Ordner für deine Notizen. Jeder Tag wird als eigene
-              JSON-Datei gespeichert (z. B. <code>2026-06-14.json</code>).
-            </p>
-            <button
-              type="button"
-              className="folder-gate__button"
-              onClick={onSelectFolder}
-            >
-              Ordner auswählen
-            </button>
-          </>
-        ) : null}
+        <div className="folder-gate__body">
+          <h1 className="folder-gate__title">
+            {state === "error"
+              ? "Couldn’t open the folder"
+              : "Welcome to oh-my-note"}
+          </h1>
 
-        {state === "unsupported" ? (
-          <>
+          {state === "pick" ? (
+            <>
+              <p className="folder-gate__text">
+                Choose a folder to store your notes. Everything stays on your
+                device.
+              </p>
+              {showPermissionHint ? (
+                <div className="folder-gate__hint">
+                  <p className="folder-gate__hint-title">
+                    Your browser will ask for permission
+                  </p>
+                  <PermissionSteps />
+                </div>
+              ) : null}
+            </>
+          ) : null}
+
+          {state === "unsupported" ? (
             <p className="folder-gate__text folder-gate__text--error">
-              Dein Browser unterstützt keine lokale Ordnerauswahl. Bitte Chrome
-              oder Edge verwenden.
+              Your browser doesn&apos;t support opening a local folder. Please
+              use Chrome or Edge.
             </p>
-          </>
-        ) : null}
+          ) : null}
 
-        {state === "error" ? (
-          <>
+          {state === "error" ? (
             <p className="folder-gate__text folder-gate__text--error">
-              {message ?? "Der Notizen-Ordner konnte nicht geöffnet werden."}
+              {message ?? "The notes folder couldn’t be opened."}
             </p>
-            <button
-              type="button"
-              className="folder-gate__button"
-              onClick={onSelectFolder}
-            >
-              Ordner auswählen
-            </button>
-          </>
+          ) : null}
+        </div>
+
+        {state !== "unsupported" ? (
+          <button
+            type="button"
+            className="folder-gate__button"
+            onClick={onSelectFolder}
+          >
+            <FolderIcon />
+            {state === "error" ? "Try another folder" : "Open folder"}
+          </button>
         ) : null}
       </div>
     </div>
