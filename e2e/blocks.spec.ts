@@ -614,6 +614,51 @@ test.describe("Tastatur-Interaktionen", () => {
     await expect(parent.locator("> .block__children")).toHaveCount(0);
   });
 
+  test("Einrücken behält Fokus und erlaubt weiteres Tippen", async ({
+    page,
+  }) => {
+    await addBlock(page, "text");
+    await addBlock(page, "text");
+    await fillBlock(blocks(page, "text").first(), "Parent");
+    await fillBlock(blocks(page, "text").nth(1), "Child");
+
+    const second = blocks(page, "text").nth(1);
+    const input = blockInput(second);
+    await input.click();
+    await input.press("Tab");
+
+    const parent = blocks(page, "text").first();
+    const nestedInput = blockInput(nestedBlocks(parent, "text").first());
+    await expect(nestedInput).toBeFocused();
+    await page.keyboard.type("!");
+    await expect(nestedInput).toHaveValue("Child!");
+  });
+
+  test("Ausrücken behält Fokus und erlaubt weiteres Tippen", async ({
+    page,
+  }) => {
+    await addBlock(page, "text");
+    await addBlock(page, "text");
+    await fillBlock(blocks(page, "text").first(), "Parent");
+    await fillBlock(blocks(page, "text").nth(1), "Child");
+
+    const second = blocks(page, "text").nth(1);
+    const input = blockInput(second);
+    await input.click();
+    await input.press("Tab");
+
+    const parent = blocks(page, "text").first();
+    const nestedInput = blockInput(nestedBlocks(parent, "text").first());
+    await nestedInput.click();
+    await nestedInput.press("Shift+Tab");
+
+    const outdented = blocks(page, "text").nth(1);
+    const outdentedInput = blockInput(outdented);
+    await expect(outdentedInput).toBeFocused();
+    await page.keyboard.type("!");
+    await expect(outdentedInput).toHaveValue("Child!");
+  });
+
   test("Enter in Code erstellt Codeblock darunter", async ({ page }) => {
     await addBlock(page, "code");
     const code = blocks(page, "code").first();

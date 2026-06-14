@@ -12,6 +12,10 @@ export function focusInput(
   if (!shouldFocus) return;
   requestAnimationFrame(() => {
     el.focus();
+    if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement) {
+      const end = el.value.length;
+      el.setSelectionRange(end, end);
+    }
     onFocused();
   });
 }

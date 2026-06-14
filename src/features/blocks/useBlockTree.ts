@@ -236,6 +236,7 @@ export function useBlockTree({ date, rootBlocksQuery }: UseBlockTreeProps) {
       const updates = await indentBlock(id, rootIds, getBlock);
       if (!updates) return;
 
+      setFocusId(id);
       await apply(buildTreeChange(snapshot, updates));
     },
     [apply, getBlock, getRootIds],
@@ -270,6 +271,7 @@ export function useBlockTree({ date, rootBlocksQuery }: UseBlockTreeProps) {
       const updates = await outdentBlock(id, rootIds, date, getBlock);
       if (!updates) return;
 
+      setFocusId(id);
       await apply(buildTreeChange(snapshot, updates));
     },
     [apply, date, getBlock, getRootIds],
