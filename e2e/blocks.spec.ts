@@ -1558,6 +1558,68 @@ test.describe("Vim-Block-Navigation", () => {
     );
   });
 
+  test("kopiert gelöschten Block mit dd in Zwischenablage und fügt mit p ein", async ({
+    page,
+  }) => {
+    const today = todayISO();
+    await gotoAppWithBlocks(page, [
+      seedTextBlock("dd-yank-a", "Alpha", today, `${today}T10:00:00.000Z`),
+      seedTextBlock("dd-yank-b", "Beta", today, `${today}T11:00:00.000Z`),
+      seedTextBlock(
+        "dd-yank-parent",
+        "Parent",
+        today,
+        `${today}T12:00:00.000Z`,
+        null,
+        ["dd-yank-child"],
+      ),
+      seedTextBlock(
+        "dd-yank-child",
+        "Kind",
+        today,
+        `${today}T12:30:00.000Z`,
+        "dd-yank-parent",
+      ),
+    ]);
+
+    await focusBlockNavigation(page);
+    await pressVimNavKey(page, "G");
+    await pressVimNavKey(page, "k");
+    await expect(navSelectedBlock(page)).toHaveAttribute(
+      "data-block-id",
+      "dd-yank-parent",
+    );
+
+    await pressVimNavKey(page, "d");
+    await pressVimNavKey(page, "d");
+
+    await expect(page.locator('[data-block-id="dd-yank-parent"]')).toHaveCount(
+      0,
+    );
+    await expect(blocks(page)).toHaveCount(2);
+
+    await pressVimNavKey(page, "g");
+    await pressVimNavKey(page, "g");
+    await expect(navSelectedBlock(page)).toHaveAttribute(
+      "data-block-id",
+      "dd-yank-a",
+    );
+
+    await pressVimNavKey(page, "p");
+
+    await expect(blocks(page)).toHaveCount(3);
+    const pastedParent = navSelectedBlock(page);
+    await expect(blockInput(pastedParent)).toHaveValue("Parent");
+    await expect(pastedParent).not.toHaveAttribute(
+      "data-block-id",
+      "dd-yank-parent",
+    );
+    await expect(nestedBlocks(pastedParent, "text")).toHaveCount(1);
+    await expect(
+      blockInput(nestedBlocks(pastedParent, "text").first()),
+    ).toHaveValue("Kind");
+  });
+
   test("erstellt mit o neuen Block darunter und betritt Input-Modus", async ({
     page,
   }) => {

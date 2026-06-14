@@ -217,6 +217,8 @@ export function BlockNavigationProvider({ children }: { children: ReactNode }) {
     const blockId = selectedBlockId;
     const focusTarget = getBlockBelow(blockId);
 
+    await yankBlockByNavigation(queryClient, blockId);
+
     const change = await deleteBlockByNavigation(queryClient, blockId);
     if (!change) return;
 
