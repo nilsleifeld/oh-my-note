@@ -70,6 +70,7 @@ export function ToggleBlock(props: BlockContentProps) {
         onOutdent={props.onOutdent}
         shouldFocus={props.shouldFocus}
         onFocused={props.onFocused}
+        onRequestFocus={props.onRequestFocus}
         onTitleInput={onTitleInput}
         onSaveTitle={(title, previousTitle) => {
           void changeTitle.mutateAsync({

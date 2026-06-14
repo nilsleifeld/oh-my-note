@@ -53,6 +53,20 @@ export function buildTypeChange(block: Block, type: BlockType): BlockChange {
   return { snapshot: [snapshot], updates: [update] };
 }
 
+export function buildSlashTypeChange(
+  block: Block,
+  type: BlockType,
+): BlockChange {
+  const snapshot = cloneBlock(block);
+  const update = {
+    ...cloneBlock(block),
+    type,
+    properties: { ...block.properties, title: "" },
+  };
+
+  return { snapshot: [snapshot], updates: [update] };
+}
+
 export function buildBulletShortcutChange(
   block: Block,
   title: string,

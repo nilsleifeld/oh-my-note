@@ -6,8 +6,10 @@ import {
   blockImage,
   blockImageTarget,
   blockInput,
+  blockSlashMenu,
   blocksInDay,
   changeBlockType,
+  confirmSlashSelection,
   emptyDayHint,
   ensureDaySectionLoaded,
   fillBlock,
@@ -20,6 +22,7 @@ import {
   pressInBlock,
   reloadApp,
   selectCodeLanguage,
+  selectSlashOption,
   shiftDate,
   simulateDragDrop,
   simulateDragOver,
@@ -28,6 +31,7 @@ import {
   todaySection,
   todayISO,
   typeInBlockAndPress,
+  typeSlashInBlock,
   waitForBlockCount,
 } from "./fixtures/app";
 
@@ -1179,5 +1183,131 @@ test.describe("Image-Blöcke", () => {
 
     await pasteImageInBlock(image);
     await expect(blockImage(image)).toBeVisible();
+  });
+});
+
+test.describe("Slash-Befehl", () => {
+  test.beforeEach(async ({ page }) => {
+    await gotoApp(page);
+  });
+
+  test("öffnet Popover mit allen Block-Typen bei /", async ({ page }) => {
+    await addBlock(page, "text");
+    const block = blocks(page, "text").first();
+    await typeSlashInBlock(block, "/");
+
+    const menu = blockSlashMenu(block);
+    await expect(menu).toBeVisible();
+    await expect(menu.locator(".block-slash-menu__option")).toHaveCount(11);
+    await expect(menu.getByRole("option", { name: "Text" })).toHaveAttribute(
+      "aria-disabled",
+      "true",
+    );
+    await expect(menu.getByRole("option", { name: "Heading 1" })).toHaveClass(
+      /block-slash-menu__option--highlighted/,
+    );
+    await expect(menu.getByRole("option", { name: "Bullet" })).toBeVisible();
+    await expect(menu.getByRole("option", { name: "To-do" })).toBeVisible();
+    await expect(menu.getByRole("option", { name: "Code" })).toBeVisible();
+  });
+
+  test("filtert Block-Typen beim Weiterschreiben", async ({ page }) => {
+    await addBlock(page, "text");
+    const block = blocks(page, "text").first();
+    await typeSlashInBlock(block, "/bul");
+
+    const menu = blockSlashMenu(block);
+    await expect(menu).toBeVisible();
+    await expect(menu.locator(".block-slash-menu__option")).toHaveCount(1);
+    await expect(menu.getByRole("option", { name: "Bullet" })).toBeVisible();
+  });
+
+  test("übernimmt Typ per Enter auf ausgewählter Option", async ({ page }) => {
+    await addBlock(page, "text");
+    const block = blocks(page, "text").first();
+    await typeSlashInBlock(block, "/todo");
+    await confirmSlashSelection(block);
+
+    await expect(blocks(page, "todo")).toHaveCount(1);
+    await expect(blocks(page, "text")).toHaveCount(0);
+    await expect(blockInput(blocks(page, "todo").first())).toHaveValue("");
+    await expect(blockInput(blocks(page, "todo").first())).toBeFocused();
+  });
+
+  test("übernimmt Typ per Klick auf Option", async ({ page }) => {
+    await addBlock(page, "text");
+    const block = blocks(page, "text").first();
+    await typeSlashInBlock(block, "/");
+    await selectSlashOption(block, "Toggle");
+
+    await expect(blocks(page, "toggle")).toHaveCount(1);
+    await expect(blocks(page, "text")).toHaveCount(0);
+    await expect(blockInput(blocks(page, "toggle").first())).toHaveValue("");
+  });
+
+  test("navigiert mit Pfeiltasten und übernimmt per Enter", async ({
+    page,
+  }) => {
+    await addBlock(page, "text");
+    const block = blocks(page, "text").first();
+    await typeSlashInBlock(block, "/head");
+
+    const menu = blockSlashMenu(block);
+    await expect(menu.locator(".block-slash-menu__option")).toHaveCount(5);
+    await expect(menu.getByRole("option", { name: "Heading 1" })).toHaveClass(
+      /block-slash-menu__option--highlighted/,
+    );
+
+    const input = blockInput(block);
+    await input.press("ArrowDown");
+    await expect(menu.getByRole("option", { name: "Heading 2" })).toHaveClass(
+      /block-slash-menu__option--highlighted/,
+    );
+
+    await confirmSlashSelection(block);
+    await expect(blocks(page, "h2")).toHaveCount(1);
+    await expect(blocks(page, "text")).toHaveCount(0);
+  });
+
+  test("überspringt aktuellen Typ bei Pfeilnavigation", async ({ page }) => {
+    await addBlock(page, "text");
+    const block = blocks(page, "text").first();
+    await typeSlashInBlock(block, "/");
+
+    const menu = blockSlashMenu(block);
+    const input = blockInput(block);
+
+    for (let i = 0; i < 5; i += 1) {
+      await input.press("ArrowDown");
+    }
+
+    await expect(menu.getByRole("option", { name: "Bullet" })).toHaveClass(
+      /block-slash-menu__option--highlighted/,
+    );
+    await expect(menu.getByRole("option", { name: "Text" })).toHaveAttribute(
+      "aria-disabled",
+      "true",
+    );
+  });
+
+  test("bestätigt aktuellen Typ per Enter nicht", async ({ page }) => {
+    await addBlock(page, "todo");
+    const block = blocks(page, "todo").first();
+    await typeSlashInBlock(block, "/todo");
+    await confirmSlashSelection(block);
+
+    await expect(blocks(page, "todo")).toHaveCount(1);
+    await expect(blockSlashMenu(block)).toBeVisible();
+    await expect(blockInput(block)).toBeFocused();
+  });
+
+  test("wandelt Code-Block per Slash-Befehl um", async ({ page }) => {
+    await addBlock(page, "code");
+    const block = blocks(page, "code").first();
+    await typeSlashInBlock(block, "/h1");
+    await confirmSlashSelection(block);
+
+    await expect(blocks(page, "h1")).toHaveCount(1);
+    await expect(blocks(page, "code")).toHaveCount(0);
   });
 });

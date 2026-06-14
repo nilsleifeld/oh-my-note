@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import type { Block } from "../../types/models";
+import { useBlockTypeSlashMenu } from "../../features/blocks/useBlockTypeSlashMenu";
 import { readImageFromPasteEvent } from "../../utils/clipboardImage";
+import { BlockTypeSlashMenu } from "./BlockTypeSlashMenu";
 import { focusInput, onTabIndentOutdent, resizeTextarea } from "./utils";
 
 type BlockInputProps = {
@@ -14,6 +16,7 @@ type BlockInputProps = {
   onOutdent: () => void;
   shouldFocus: boolean;
   onFocused: () => void;
+  onRequestFocus?: (blockId: string) => void;
   onSaveTitle: (title: string, previousTitle: string) => void;
   onPasteImage?: (imageData: string) => void;
   onTitleInput?: (value: string) => string;
@@ -30,6 +33,7 @@ export function BlockInput({
   onOutdent,
   shouldFocus,
   onFocused,
+  onRequestFocus,
   onSaveTitle,
   onPasteImage,
   onTitleInput,
@@ -37,10 +41,12 @@ export function BlockInput({
   const [title, setTitle] = useState(block.properties.title);
   const titleOnFocusRef = useRef(block.properties.title);
   const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement>(null);
+  const slashMenu = useBlockTypeSlashMenu(block.id, block.type, onRequestFocus);
 
   useEffect(() => {
     setTitle(block.properties.title);
-  }, [block.id, block.properties.title]);
+    slashMenu.syncFromTitle(block.properties.title);
+  }, [block.id, block.properties.title, slashMenu.syncFromTitle]);
 
   useEffect(() => {
     const el = inputRef.current;
@@ -68,6 +74,13 @@ export function BlockInput({
   const updateTitle = (value: string) =>
     onTitleInput ? onTitleInput(value) : value;
 
+  const onTitleChange = (value: string) => {
+    const next = updateTitle(value);
+    setTitle(next);
+    slashMenu.syncFromTitle(next);
+    return next;
+  };
+
   const commonProps = {
     className: inputClass,
     value: title,
@@ -80,21 +93,70 @@ export function BlockInput({
     },
   };
 
+  const slashMenuPanel = (
+    <BlockTypeSlashMenu
+      open={slashMenu.open}
+      filtered={slashMenu.filtered}
+      highlight={slashMenu.highlight}
+      currentType={slashMenu.currentType}
+      listRef={slashMenu.listRef}
+      onHighlight={slashMenu.setHighlight}
+      onSelect={slashMenu.selectType}
+    />
+  );
+
   if (multiline) {
     return (
-      <textarea
+      <div className="block-input-wrap">
+        <textarea
+          {...commonProps}
+          ref={inputRef as React.RefObject<HTMLTextAreaElement>}
+          rows={1}
+          onChange={(e) => {
+            onTitleChange(e.target.value);
+            resizeTextarea(e.target);
+          }}
+          onBlur={(e) => saveTitle(e.target.value)}
+          onKeyDown={(e) => {
+            if (slashMenu.handleKeyDown(e)) return;
+            commonProps.onKeyDown(e);
+            if (e.key === "Enter" && !e.shiftKey) {
+              e.preventDefault();
+              saveTitle(e.currentTarget.value);
+              onEnter();
+            }
+            if (e.key === "Backspace") {
+              const el = e.currentTarget;
+              const atStart = el.selectionStart === 0 && el.selectionEnd === 0;
+              if (atStart && el.value !== "" && onBackspaceAtStart) {
+                e.preventDefault();
+                onBackspaceAtStart();
+                return;
+              }
+              if (el.value === "") {
+                e.preventDefault();
+                onBackspaceEmpty();
+              }
+            }
+          }}
+        />
+        {slashMenuPanel}
+      </div>
+    );
+  }
+
+  return (
+    <div className="block-input-wrap">
+      <input
         {...commonProps}
-        ref={inputRef as React.RefObject<HTMLTextAreaElement>}
-        rows={1}
-        onChange={(e) => {
-          const next = updateTitle(e.target.value);
-          setTitle(next);
-          resizeTextarea(e.target);
-        }}
+        ref={inputRef as React.RefObject<HTMLInputElement>}
+        type="text"
+        onChange={(e) => onTitleChange(e.target.value)}
         onBlur={(e) => saveTitle(e.target.value)}
         onKeyDown={(e) => {
+          if (slashMenu.handleKeyDown(e)) return;
           commonProps.onKeyDown(e);
-          if (e.key === "Enter" && !e.shiftKey) {
+          if (e.key === "Enter") {
             e.preventDefault();
             saveTitle(e.currentTarget.value);
             onEnter();
@@ -114,37 +176,7 @@ export function BlockInput({
           }
         }}
       />
-    );
-  }
-
-  return (
-    <input
-      {...commonProps}
-      ref={inputRef as React.RefObject<HTMLInputElement>}
-      type="text"
-      onChange={(e) => setTitle(updateTitle(e.target.value))}
-      onBlur={(e) => saveTitle(e.target.value)}
-      onKeyDown={(e) => {
-        commonProps.onKeyDown(e);
-        if (e.key === "Enter") {
-          e.preventDefault();
-          saveTitle(e.currentTarget.value);
-          onEnter();
-        }
-        if (e.key === "Backspace") {
-          const el = e.currentTarget;
-          const atStart = el.selectionStart === 0 && el.selectionEnd === 0;
-          if (atStart && el.value !== "" && onBackspaceAtStart) {
-            e.preventDefault();
-            onBackspaceAtStart();
-            return;
-          }
-          if (el.value === "") {
-            e.preventDefault();
-            onBackspaceEmpty();
-          }
-        }
-      }}
-    />
+      {slashMenuPanel}
+    </div>
   );
 }

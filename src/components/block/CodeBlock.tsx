@@ -5,9 +5,11 @@ import { useChangeBlockLanguage } from "../../features/blocks/mutations/useChang
 import { useChangeBlockTitle } from "../../features/blocks/mutations/useChangeBlockTitle";
 import { usePasteBlockImage } from "../../features/blocks/mutations/usePasteBlockImage";
 import { useBlockTitleShortcuts } from "../../features/blocks/useBlockTitleShortcuts";
+import { useBlockTypeSlashMenu } from "../../features/blocks/useBlockTypeSlashMenu";
 import { readImageFromPasteEvent } from "../../utils/clipboardImage";
 import { syncCodeHighlight } from "../../utils/highlight";
 import { Select } from "../ui/Select";
+import { BlockTypeSlashMenu } from "./BlockTypeSlashMenu";
 import { focusInput, onTabIndentOutdent, resizeTextarea } from "./utils";
 
 export function CodeBlock(props: BlockContentProps) {
@@ -18,6 +20,11 @@ export function CodeBlock(props: BlockContentProps) {
     props.blockId,
     props.onRequestFocus,
   );
+  const slashMenu = useBlockTypeSlashMenu(
+    props.blockId,
+    props.block.type,
+    props.onRequestFocus,
+  );
   const [title, setTitle] = useState(props.block.properties.title);
   const titleOnFocusRef = useRef(props.block.properties.title);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -26,7 +33,8 @@ export function CodeBlock(props: BlockContentProps) {
 
   useEffect(() => {
     setTitle(props.block.properties.title);
-  }, [props.block.id, props.block.properties.title]);
+    slashMenu.syncFromTitle(props.block.properties.title);
+  }, [props.block.id, props.block.properties.title, slashMenu.syncFromTitle]);
 
   const syncEditor = () => {
     const textarea = textareaRef.current;
@@ -84,7 +92,7 @@ export function CodeBlock(props: BlockContentProps) {
           requestAnimationFrame(syncEditor);
         }}
       />
-      <div className="block__code-editor">
+      <div className="block__code-editor block-input-wrap">
         <pre ref={preRef} className="block__code-highlight" aria-hidden="true">
           <code ref={codeRef} />
         </pre>
@@ -100,6 +108,7 @@ export function CodeBlock(props: BlockContentProps) {
           onChange={(e) => {
             const next = onTitleInput(e.target.value);
             setTitle(next);
+            slashMenu.syncFromTitle(next);
             syncEditor();
           }}
           onBlur={(e) => saveTitle(e.target.value)}
@@ -113,6 +122,7 @@ export function CodeBlock(props: BlockContentProps) {
             });
           }}
           onKeyDown={(e) => {
+            if (slashMenu.handleKeyDown(e)) return;
             onTabIndentOutdent(e, props.onIndent, props.onOutdent);
             if (e.key === "Enter" && !e.shiftKey) {
               e.preventDefault();
@@ -124,6 +134,15 @@ export function CodeBlock(props: BlockContentProps) {
               props.onBackspaceEmpty();
             }
           }}
+        />
+        <BlockTypeSlashMenu
+          open={slashMenu.open}
+          filtered={slashMenu.filtered}
+          highlight={slashMenu.highlight}
+          currentType={slashMenu.currentType}
+          listRef={slashMenu.listRef}
+          onHighlight={slashMenu.setHighlight}
+          onSelect={slashMenu.selectType}
         />
       </div>
     </div>

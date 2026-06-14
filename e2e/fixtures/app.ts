@@ -246,6 +246,28 @@ export async function fillBlock(block: Locator, text: string) {
   await input.blur();
 }
 
+export function blockSlashMenu(block: Locator): Locator {
+  return block.locator(".block-slash-menu");
+}
+
+export async function typeSlashInBlock(block: Locator, text: string) {
+  const input = blockInput(block);
+  await input.click();
+  await input.pressSequentially(text);
+}
+
+export async function selectSlashOption(block: Locator, label: string) {
+  const option = blockSlashMenu(block)
+    .locator(".block-slash-menu__option")
+    .filter({ hasText: label });
+  await expect(option).toBeVisible();
+  await option.click();
+}
+
+export async function confirmSlashSelection(block: Locator) {
+  await blockInput(block).press("Enter");
+}
+
 export async function pressInBlock(block: Locator, key: string) {
   const target = blockImageTarget(block);
   await target.click();

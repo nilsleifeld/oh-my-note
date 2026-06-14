@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import type { PopoverControls, SelectOption } from "../../types/ui";
+import { filterOptions } from "../../utils/filterOptions";
 import { Popover } from "./Popover";
 
 type SelectProps = {
@@ -12,20 +13,6 @@ type SelectProps = {
   searchPlaceholder?: string;
   emptyText?: string;
 };
-
-function normalize(value: string): string {
-  return value.trim().toLowerCase();
-}
-
-function filterOptions(options: readonly SelectOption[], query: string) {
-  const needle = normalize(query);
-  if (!needle) return options;
-  return options.filter(
-    (option) =>
-      normalize(option.label).includes(needle) ||
-      normalize(option.value).includes(needle),
-  );
-}
 
 function selectedLabel(options: readonly SelectOption[], value: string) {
   return options.find((option) => option.value === value)?.label ?? value;

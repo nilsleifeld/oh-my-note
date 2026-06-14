@@ -10,6 +10,7 @@
 @import "./components/skeleton.css";
 @import "./components/day.css";
 @import "./components/block.css";
+@import "./components/block-slash-menu.css";
 @import "./components/popover.css";
 @import "./components/select.css";
 @import "./components/code-highlight.css";
