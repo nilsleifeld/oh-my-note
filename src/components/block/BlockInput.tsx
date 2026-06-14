@@ -10,12 +10,14 @@ type BlockInputProps = {
   inputClass: string;
   onEnter: () => void;
   onBackspaceEmpty: () => void;
+  onBackspaceAtStart?: () => void;
   onIndent: () => void;
   onOutdent: () => void;
   shouldFocus: boolean;
   onFocused: () => void;
   onSaveTitle: (title: string, previousTitle: string) => void;
   onPasteImage?: (imageData: string) => void;
+  onTitleInput?: (value: string) => string;
 };
 
 export function BlockInput({
@@ -24,12 +26,14 @@ export function BlockInput({
   inputClass,
   onEnter,
   onBackspaceEmpty,
+  onBackspaceAtStart,
   onIndent,
   onOutdent,
   shouldFocus,
   onFocused,
   onSaveTitle,
   onPasteImage,
+  onTitleInput,
 }: BlockInputProps) {
   const [title, setTitle] = useState(block.properties.title);
   const titleOnFocusRef = useRef(block.properties.title);
@@ -62,6 +66,9 @@ export function BlockInput({
     onPasteImage(dataUrl);
   };
 
+  const updateTitle = (value: string) =>
+    onTitleInput ? onTitleInput(value) : value;
+
   const commonProps = {
     className: inputClass,
     value: title,
@@ -82,7 +89,8 @@ export function BlockInput({
         ref={inputRef as React.RefObject<HTMLTextAreaElement>}
         rows={1}
         onChange={(e) => {
-          setTitle(e.target.value);
+          const next = updateTitle(e.target.value);
+          setTitle(next);
           resizeTextarea(e.target);
         }}
         onBlur={(e) => saveTitle(e.target.value)}
@@ -93,9 +101,18 @@ export function BlockInput({
             saveTitle(e.currentTarget.value);
             onEnter();
           }
-          if (e.key === "Backspace" && e.currentTarget.value === "") {
-            e.preventDefault();
-            onBackspaceEmpty();
+          if (e.key === "Backspace") {
+            const el = e.currentTarget;
+            const atStart = el.selectionStart === 0 && el.selectionEnd === 0;
+            if (atStart && el.value !== "" && onBackspaceAtStart) {
+              e.preventDefault();
+              onBackspaceAtStart();
+              return;
+            }
+            if (el.value === "") {
+              e.preventDefault();
+              onBackspaceEmpty();
+            }
           }
         }}
       />
@@ -107,7 +124,7 @@ export function BlockInput({
       {...commonProps}
       ref={inputRef as React.RefObject<HTMLInputElement>}
       type="text"
-      onChange={(e) => setTitle(e.target.value)}
+      onChange={(e) => setTitle(updateTitle(e.target.value))}
       onBlur={(e) => saveTitle(e.target.value)}
       onKeyDown={(e) => {
         commonProps.onKeyDown(e);
@@ -116,9 +133,18 @@ export function BlockInput({
           saveTitle(e.currentTarget.value);
           onEnter();
         }
-        if (e.key === "Backspace" && e.currentTarget.value === "") {
-          e.preventDefault();
-          onBackspaceEmpty();
+        if (e.key === "Backspace") {
+          const el = e.currentTarget;
+          const atStart = el.selectionStart === 0 && el.selectionEnd === 0;
+          if (atStart && el.value !== "" && onBackspaceAtStart) {
+            e.preventDefault();
+            onBackspaceAtStart();
+            return;
+          }
+          if (el.value === "") {
+            e.preventDefault();
+            onBackspaceEmpty();
+          }
         }
       }}
     />

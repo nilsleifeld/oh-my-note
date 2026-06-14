@@ -9,6 +9,7 @@ export function isHeadingBlockType(type: BlockType): boolean {
 
 export const blockPlaceholders: Record<Block["type"], string> = {
   text: "Empty text block",
+  bullet: "Bullet",
   todo: "To-do",
   toggle: "Toggle",
   code: "Code",
@@ -27,6 +28,7 @@ export const blockTypeOptions: SelectOption[] = [
   { value: "h4", label: "Heading 4" },
   { value: "h5", label: "Heading 5" },
   { value: "text", label: "Text" },
+  { value: "bullet", label: "Bullet" },
   { value: "todo", label: "To-do" },
   { value: "toggle", label: "Toggle" },
   { value: "code", label: "Code" },

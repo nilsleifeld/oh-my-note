@@ -3,6 +3,7 @@
 export type BlockType =
   | "todo"
   | "text"
+  | "bullet"
   | "code"
   | "image"
   | "toggle"

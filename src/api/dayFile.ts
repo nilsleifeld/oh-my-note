@@ -13,6 +13,7 @@ export type DayFile = {
 const BLOCK_TYPES = new Set<BlockType>([
   "todo",
   "text",
+  "bullet",
   "code",
   "image",
   "toggle",

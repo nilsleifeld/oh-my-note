@@ -8,6 +8,7 @@ import { Skeleton } from "../ui/Skeleton";
 import { CodeBlock } from "./CodeBlock";
 import { HeadingBlock } from "./HeadingBlock";
 import { ImageBlock } from "./ImageBlock";
+import { BulletBlock } from "./BulletBlock";
 import { TextBlock } from "./TextBlock";
 import { TodoBlock } from "./TodoBlock";
 import { ToggleBlock } from "./ToggleBlock";
@@ -92,6 +93,7 @@ export function BlockRow({
           onDragEnd={onDragEnd}
         />
         {block.type === "text" ? <TextBlock {...contentProps} /> : null}
+        {block.type === "bullet" ? <BulletBlock {...contentProps} /> : null}
         {block.type === "todo" ? <TodoBlock {...contentProps} /> : null}
         {block.type === "toggle" ? <ToggleBlock {...contentProps} /> : null}
         {block.type === "code" ? <CodeBlock {...contentProps} /> : null}

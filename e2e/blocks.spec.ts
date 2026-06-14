@@ -37,14 +37,22 @@ test.describe("Block-Erstellung", () => {
     await gotoApp(page);
   });
 
-  test("erstellt Text-, To-do- und Code-Blöcke", async ({ page }) => {
+  test("erstellt Text-, Bullet-, To-do- und Code-Blöcke", async ({ page }) => {
     await addBlock(page, "text");
+    await addBlock(page, "bullet");
     await addBlock(page, "todo");
     await addBlock(page, "code");
 
     await expect(blocks(page, "text")).toHaveCount(1);
+    await expect(blocks(page, "bullet")).toHaveCount(1);
     await expect(blocks(page, "todo")).toHaveCount(1);
     await expect(blocks(page, "code")).toHaveCount(1);
+    await expect(
+      blocks(page, "text").first().locator(".block__bullet"),
+    ).toHaveCount(0);
+    await expect(
+      blocks(page, "bullet").first().locator(".block__bullet"),
+    ).toBeVisible();
   });
 
   test("erstellt Heading-Blöcke h1–h5", async ({ page }) => {
@@ -204,6 +212,42 @@ test.describe("Block-Typ wechseln", () => {
     ).toBeVisible();
   });
 
+  test("Backspace am Zeilenanfang wandelt Bullet in Text um", async ({
+    page,
+  }) => {
+    const block = blocks(page, "text").first();
+    await changeBlockType(block, "bullet");
+    await fillBlock(blocks(page, "bullet").first(), "Listenpunkt");
+
+    const input = blockInput(blocks(page, "bullet").first());
+    await input.click();
+    await input.press("Home");
+    await input.press("Backspace");
+
+    await expect(blocks(page, "bullet")).toHaveCount(0);
+    await expect(blocks(page, "text")).toHaveCount(1);
+    await expect(blockInput(blocks(page, "text").first())).toHaveValue(
+      "Listenpunkt",
+    );
+    await expect(
+      blocks(page, "text").first().locator(".block__bullet"),
+    ).toHaveCount(0);
+  });
+
+  test('"- " wandelt Textblock in Bullet um', async ({ page }) => {
+    const block = blocks(page, "text").first();
+    const input = blockInput(block);
+    await input.click();
+    await input.pressSequentially("- ", { delay: 50 });
+
+    await expect(blocks(page, "text")).toHaveCount(0);
+    await expect(blocks(page, "bullet")).toHaveCount(1);
+    await expect(blockInput(blocks(page, "bullet").first())).toHaveValue("");
+    await expect(
+      blocks(page, "bullet").first().locator(".block__bullet"),
+    ).toBeVisible();
+  });
+
   test("wechselt To-do → Text", async ({ page }) => {
     const block = blocks(page, "text").first();
     await changeBlockType(block, "todo");
@@ -213,7 +257,7 @@ test.describe("Block-Typ wechseln", () => {
     await expect(blocks(page, "todo")).toHaveCount(0);
     await expect(
       blocks(page, "text").first().locator(".block__bullet"),
-    ).toBeVisible();
+    ).toHaveCount(0);
   });
 
   test("wechselt Text → Heading 1 und behält Inhalt", async ({ page }) => {
