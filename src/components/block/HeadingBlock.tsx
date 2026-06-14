@@ -1,11 +1,13 @@
 import type { BlockContentProps } from "../../types/ui";
 import { useChangeBlockTitle } from "../../features/blocks/mutations/useChangeBlockTitle";
 import { usePasteBlockImage } from "../../features/blocks/mutations/usePasteBlockImage";
+import { useBlockTitleShortcuts } from "../../features/blocks/useBlockTitleShortcuts";
 import { BlockInput } from "./BlockInput";
 
 export function HeadingBlock(props: BlockContentProps) {
   const changeTitle = useChangeBlockTitle();
   const pasteImage = usePasteBlockImage();
+  const onTitleInput = useBlockTitleShortcuts(props.blockId);
 
   return (
     <BlockInput
@@ -18,6 +20,7 @@ export function HeadingBlock(props: BlockContentProps) {
       onOutdent={props.onOutdent}
       shouldFocus={props.shouldFocus}
       onFocused={props.onFocused}
+      onTitleInput={onTitleInput}
       onSaveTitle={(title, previousTitle) => {
         void changeTitle.mutateAsync({
           blockId: props.blockId,

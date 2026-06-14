@@ -308,6 +308,129 @@ test.describe("Block-Typ wechseln", () => {
     ).not.toBeChecked();
   });
 
+  test.describe("Shortcuts aus jedem Block-Typ", () => {
+    async function typeShortcut(
+      block: ReturnType<typeof blocks>,
+      shortcut: "- " | "[] ",
+    ) {
+      const input = blockInput(block);
+      await input.click();
+      await input.pressSequentially(shortcut, { delay: 50 });
+    }
+
+    test('"- " wandelt To-do in Bullet um', async ({ page }) => {
+      await addBlock(page, "todo");
+      await typeShortcut(blocks(page, "todo").first(), "- ");
+
+      await expect(blocks(page, "todo")).toHaveCount(0);
+      await expect(blocks(page, "bullet")).toHaveCount(1);
+      await expect(blockInput(blocks(page, "bullet").first())).toHaveValue("");
+      await expect(
+        blocks(page, "bullet").first().locator(".block__bullet"),
+      ).toBeVisible();
+    });
+
+    test('"[] " wandelt Bullet in To-do um', async ({ page }) => {
+      await addBlock(page, "bullet");
+      await typeShortcut(blocks(page, "bullet").first(), "[] ");
+
+      await expect(blocks(page, "bullet")).toHaveCount(0);
+      await expect(blocks(page, "todo")).toHaveCount(1);
+      await expect(blockInput(blocks(page, "todo").first())).toHaveValue("");
+      await expect(
+        blocks(page, "todo").first().locator(".block__checkbox"),
+      ).toBeVisible();
+    });
+
+    test('"- " wandelt Toggle in Bullet um', async ({ page }) => {
+      await addBlock(page, "toggle");
+      await typeShortcut(blocks(page, "toggle").first(), "- ");
+
+      await expect(blocks(page, "toggle")).toHaveCount(0);
+      await expect(blocks(page, "bullet")).toHaveCount(1);
+      await expect(blockInput(blocks(page, "bullet").first())).toHaveValue("");
+    });
+
+    test('"[] " wandelt Toggle in To-do um', async ({ page }) => {
+      await addBlock(page, "toggle");
+      await typeShortcut(blocks(page, "toggle").first(), "[] ");
+
+      await expect(blocks(page, "toggle")).toHaveCount(0);
+      await expect(blocks(page, "todo")).toHaveCount(1);
+      await expect(blockInput(blocks(page, "todo").first())).toHaveValue("");
+    });
+
+    test('"- " wandelt Code in Bullet um', async ({ page }) => {
+      await addBlock(page, "code");
+      await typeShortcut(blocks(page, "code").first(), "- ");
+
+      await expect(blocks(page, "code")).toHaveCount(0);
+      await expect(blocks(page, "bullet")).toHaveCount(1);
+      await expect(blockInput(blocks(page, "bullet").first())).toHaveValue("");
+    });
+
+    test('"[] " wandelt Code in To-do um', async ({ page }) => {
+      await addBlock(page, "code");
+      await typeShortcut(blocks(page, "code").first(), "[] ");
+
+      await expect(blocks(page, "code")).toHaveCount(0);
+      await expect(blocks(page, "todo")).toHaveCount(1);
+      await expect(blockInput(blocks(page, "todo").first())).toHaveValue("");
+    });
+
+    test('"- " wandelt Heading in Bullet um', async ({ page }) => {
+      await addBlock(page, "h1");
+      await typeShortcut(blocks(page, "h1").first(), "- ");
+
+      await expect(blocks(page, "h1")).toHaveCount(0);
+      await expect(blocks(page, "bullet")).toHaveCount(1);
+      await expect(blockInput(blocks(page, "bullet").first())).toHaveValue("");
+    });
+
+    test('"[] " wandelt Heading in To-do um', async ({ page }) => {
+      await addBlock(page, "h2");
+      await typeShortcut(blocks(page, "h2").first(), "[] ");
+
+      await expect(blocks(page, "h2")).toHaveCount(0);
+      await expect(blocks(page, "todo")).toHaveCount(1);
+      await expect(blockInput(blocks(page, "todo").first())).toHaveValue("");
+    });
+
+    test('"- " behält vorhandenen Inhalt beim Umwandeln', async ({ page }) => {
+      await addBlock(page, "todo");
+      const block = blocks(page, "todo").first();
+      await fillBlock(block, "Aufgabe");
+
+      const input = blockInput(block);
+      await input.click();
+      await input.press("Home");
+      await input.pressSequentially("- ", { delay: 50 });
+
+      await expect(blocks(page, "todo")).toHaveCount(0);
+      await expect(blocks(page, "bullet")).toHaveCount(1);
+      await expect(blockInput(blocks(page, "bullet").first())).toHaveValue(
+        "Aufgabe",
+      );
+    });
+
+    test('"[] " behält vorhandenen Inhalt beim Umwandeln', async ({ page }) => {
+      await addBlock(page, "toggle");
+      const block = blocks(page, "toggle").first();
+      await fillBlock(block, "Abschnitt");
+
+      const input = blockInput(block);
+      await input.click();
+      await input.press("Home");
+      await input.pressSequentially("[] ", { delay: 50 });
+
+      await expect(blocks(page, "toggle")).toHaveCount(0);
+      await expect(blocks(page, "todo")).toHaveCount(1);
+      await expect(blockInput(blocks(page, "todo").first())).toHaveValue(
+        "Abschnitt",
+      );
+    });
+  });
+
   test("Backspace am Zeilenanfang löscht Textblock", async ({ page }) => {
     const block = blocks(page, "text").first();
     await fillBlock(block, "Inhalt");

@@ -4,6 +4,7 @@ import { codeLanguages } from "../../data/blocks";
 import { useChangeBlockLanguage } from "../../features/blocks/mutations/useChangeBlockLanguage";
 import { useChangeBlockTitle } from "../../features/blocks/mutations/useChangeBlockTitle";
 import { usePasteBlockImage } from "../../features/blocks/mutations/usePasteBlockImage";
+import { useBlockTitleShortcuts } from "../../features/blocks/useBlockTitleShortcuts";
 import { readImageFromPasteEvent } from "../../utils/clipboardImage";
 import { syncCodeHighlight } from "../../utils/highlight";
 import { Select } from "../ui/Select";
@@ -13,6 +14,7 @@ export function CodeBlock(props: BlockContentProps) {
   const changeTitle = useChangeBlockTitle();
   const changeLanguage = useChangeBlockLanguage();
   const pasteImage = usePasteBlockImage();
+  const onTitleInput = useBlockTitleShortcuts(props.blockId);
   const [title, setTitle] = useState(props.block.properties.title);
   const titleOnFocusRef = useRef(props.block.properties.title);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -93,7 +95,8 @@ export function CodeBlock(props: BlockContentProps) {
             titleOnFocusRef.current = props.block.properties.title;
           }}
           onChange={(e) => {
-            setTitle(e.target.value);
+            const next = onTitleInput(e.target.value);
+            setTitle(next);
             syncEditor();
           }}
           onBlur={(e) => saveTitle(e.target.value)}

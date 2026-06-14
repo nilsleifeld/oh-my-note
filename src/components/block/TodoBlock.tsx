@@ -3,6 +3,7 @@ import { useChangeBlockTitle } from "../../features/blocks/mutations/useChangeBl
 import { useChangeBlockType } from "../../features/blocks/mutations/useChangeBlockType";
 import { usePasteBlockImage } from "../../features/blocks/mutations/usePasteBlockImage";
 import { useToggleTodo } from "../../features/blocks/mutations/useToggleTodo";
+import { useBlockTitleShortcuts } from "../../features/blocks/useBlockTitleShortcuts";
 import { BlockInput } from "./BlockInput";
 import { onTabIndentOutdent } from "./utils";
 
@@ -11,6 +12,7 @@ export function TodoBlock(props: BlockContentProps) {
   const changeType = useChangeBlockType();
   const pasteImage = usePasteBlockImage();
   const toggleTodo = useToggleTodo();
+  const onTitleInput = useBlockTitleShortcuts(props.blockId);
 
   const demoteToText = () => {
     void changeType.mutateAsync({ blockId: props.blockId, type: "text" });
@@ -45,6 +47,7 @@ export function TodoBlock(props: BlockContentProps) {
         onOutdent={props.onOutdent}
         shouldFocus={props.shouldFocus}
         onFocused={props.onFocused}
+        onTitleInput={onTitleInput}
         onSaveTitle={(title, previousTitle) => {
           void changeTitle.mutateAsync({
             blockId: props.blockId,
