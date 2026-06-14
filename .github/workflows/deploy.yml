@@ -28,6 +28,9 @@ jobs:
       - run: npm run test
       - run: npm run build
 
+      - name: Create CNAME
+        run: echo oh-my-note.nilsleifeld.de > dist/CNAME
+
       - uses: actions/upload-pages-artifact@v5
         with:
           path: dist
