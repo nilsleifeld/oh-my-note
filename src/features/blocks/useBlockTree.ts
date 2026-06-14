@@ -294,6 +294,7 @@ export function useBlockTree({ date, rootBlocksQuery }: UseBlockTreeProps) {
     onDragEnd: drag.onDragEnd,
     focusId,
     onFocused: () => setFocusId(null),
+    onRequestFocus: setFocusId,
     onAddBelow: (type, afterId) => void addChild(type, afterId),
     onIndent: (id) => void indentChild(id),
     onOutdent: (id) => void outdentChild(id),

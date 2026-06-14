@@ -26,6 +26,7 @@ export function BlockRow({
   onDragEnd,
   focusId,
   onFocused,
+  onRequestFocus,
   onAddBelow,
   onIndent,
   onOutdent,
@@ -64,6 +65,7 @@ export function BlockRow({
     onOutdent: () => onOutdent(blockId),
     shouldFocus: focusId === blockId,
     onFocused,
+    onRequestFocus,
   };
 
   const childIds = uniqueIds(pendingContent?.(block.id) ?? block.content);
@@ -128,6 +130,7 @@ export function BlockRow({
               onDragEnd={onDragEnd}
               focusId={focusId}
               onFocused={onFocused}
+              onRequestFocus={onRequestFocus}
               onAddBelow={onAddBelow}
               onIndent={onIndent}
               onOutdent={onOutdent}

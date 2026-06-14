@@ -7,7 +7,10 @@ import { BlockInput } from "./BlockInput";
 export function HeadingBlock(props: BlockContentProps) {
   const changeTitle = useChangeBlockTitle();
   const pasteImage = usePasteBlockImage();
-  const onTitleInput = useBlockTitleShortcuts(props.blockId);
+  const onTitleInput = useBlockTitleShortcuts(
+    props.blockId,
+    props.onRequestFocus,
+  );
 
   return (
     <BlockInput

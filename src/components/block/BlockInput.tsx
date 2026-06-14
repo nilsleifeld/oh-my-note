@@ -49,7 +49,7 @@ export function BlockInput({
       resizeTextarea(el);
     }
     focusInput(el, shouldFocus, onFocused);
-  }, [block.id, multiline, onFocused, shouldFocus]);
+  }, [block.id, block.type, multiline, onFocused, shouldFocus]);
 
   const saveTitle = (next: string) => {
     if (next === titleOnFocusRef.current) return;

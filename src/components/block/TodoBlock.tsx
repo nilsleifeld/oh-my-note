@@ -12,7 +12,10 @@ export function TodoBlock(props: BlockContentProps) {
   const changeType = useChangeBlockType();
   const pasteImage = usePasteBlockImage();
   const toggleTodo = useToggleTodo();
-  const onTitleInput = useBlockTitleShortcuts(props.blockId);
+  const onTitleInput = useBlockTitleShortcuts(
+    props.blockId,
+    props.onRequestFocus,
+  );
 
   const demoteToText = () => {
     void changeType.mutateAsync({ blockId: props.blockId, type: "text" });

@@ -18,6 +18,7 @@ export type BlockRowProps = {
   onDragEnd: () => void;
   focusId: string | null;
   onFocused: () => void;
+  onRequestFocus: (blockId: string) => void;
   onAddBelow: (type: Block["type"], afterId: string) => void;
   onIndent: (id: string) => void;
   onOutdent: (id: string) => void;
@@ -32,6 +33,7 @@ export type BlockContentProps = {
   onOutdent: () => void;
   shouldFocus: boolean;
   onFocused: () => void;
+  onRequestFocus: (blockId: string) => void;
 };
 
 export type SelectOption = {

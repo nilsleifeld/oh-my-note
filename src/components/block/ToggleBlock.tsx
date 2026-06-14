@@ -25,7 +25,10 @@ export function ToggleBlock(props: BlockContentProps) {
   const changeType = useChangeBlockType();
   const pasteImage = usePasteBlockImage();
   const toggleOpen = useToggleBlockOpen();
-  const onTitleInput = useBlockTitleShortcuts(props.blockId);
+  const onTitleInput = useBlockTitleShortcuts(
+    props.blockId,
+    props.onRequestFocus,
+  );
   const open = props.block.properties.open;
 
   const demoteToText = () => {

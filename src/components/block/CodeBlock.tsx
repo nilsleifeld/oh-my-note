@@ -14,7 +14,10 @@ export function CodeBlock(props: BlockContentProps) {
   const changeTitle = useChangeBlockTitle();
   const changeLanguage = useChangeBlockLanguage();
   const pasteImage = usePasteBlockImage();
-  const onTitleInput = useBlockTitleShortcuts(props.blockId);
+  const onTitleInput = useBlockTitleShortcuts(
+    props.blockId,
+    props.onRequestFocus,
+  );
   const [title, setTitle] = useState(props.block.properties.title);
   const titleOnFocusRef = useRef(props.block.properties.title);
   const textareaRef = useRef<HTMLTextAreaElement>(null);

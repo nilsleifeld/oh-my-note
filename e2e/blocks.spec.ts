@@ -325,6 +325,20 @@ test.describe("Block-Typ wechseln", () => {
     ).toHaveClass(/block__toggle--open/);
   });
 
+  test("Shortcut behält Fokus und erlaubt weiteres Tippen", async ({
+    page,
+  }) => {
+    const block = blocks(page, "text").first();
+    const input = blockInput(block);
+    await input.click();
+    await input.pressSequentially("- ", { delay: 50 });
+
+    const bulletInput = blockInput(blocks(page, "bullet").first());
+    await expect(bulletInput).toBeFocused();
+    await page.keyboard.type("Listenpunkt");
+    await expect(bulletInput).toHaveValue("Listenpunkt");
+  });
+
   test.describe("Shortcuts aus jedem Block-Typ", () => {
     async function typeShortcut(
       block: ReturnType<typeof blocks>,

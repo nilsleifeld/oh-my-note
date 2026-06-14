@@ -1,5 +1,6 @@
 import { useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import type { BlockChange } from "../../types/models";
 import {
   buildBulletShortcutChange,
   buildTodoShortcutChange,
@@ -8,9 +9,20 @@ import {
 import { getBlock } from "./cache/blockCache";
 import { useApplyBlockMutation } from "./mutations/useApplyBlockMutation";
 
-export function useBlockTitleShortcuts(blockId: string) {
+export function useBlockTitleShortcuts(
+  blockId: string,
+  onRequestFocus?: (blockId: string) => void,
+) {
   const queryClient = useQueryClient();
   const { apply } = useApplyBlockMutation();
+
+  const applyShortcut = useCallback(
+    (change: BlockChange) => {
+      onRequestFocus?.(blockId);
+      void apply(change);
+    },
+    [apply, blockId, onRequestFocus],
+  );
 
   return useCallback(
     (value: string) => {
@@ -18,7 +30,7 @@ export function useBlockTitleShortcuts(blockId: string) {
         const title = value.slice(3);
         const current = getBlock(queryClient, blockId);
         if (current) {
-          void apply(buildTodoShortcutChange(current, title));
+          applyShortcut(buildTodoShortcutChange(current, title));
         }
         return title;
       }
@@ -26,7 +38,7 @@ export function useBlockTitleShortcuts(blockId: string) {
         const title = value.slice(2);
         const current = getBlock(queryClient, blockId);
         if (current) {
-          void apply(buildBulletShortcutChange(current, title));
+          applyShortcut(buildBulletShortcutChange(current, title));
         }
         return title;
       }
@@ -34,12 +46,12 @@ export function useBlockTitleShortcuts(blockId: string) {
         const title = value.slice(2);
         const current = getBlock(queryClient, blockId);
         if (current) {
-          void apply(buildToggleShortcutChange(current, title));
+          applyShortcut(buildToggleShortcutChange(current, title));
         }
         return title;
       }
       return value;
     },
-    [apply, blockId, queryClient],
+    [applyShortcut, blockId, queryClient],
   );
 }
