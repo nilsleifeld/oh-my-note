@@ -1754,7 +1754,7 @@ test.describe("Vim-Block-Navigation", () => {
     await expect(child).toBeVisible();
   });
 
-  test("toggelt To-do per Space im Nav-Modus", async ({ page }) => {
+  test("toggelt To-do per Space und Enter im Nav-Modus", async ({ page }) => {
     const today = todayISO();
     await gotoAppWithBlocks(page, [
       {
@@ -1786,9 +1786,17 @@ test.describe("Vim-Block-Navigation", () => {
 
     await pressVimNavKey(page, " ");
     await expect(block.locator(".block__checkbox")).not.toBeChecked();
+
+    await pressVimNavKey(page, "Enter");
+    await expect(block.locator(".block__checkbox")).toBeChecked();
+
+    await pressVimNavKey(page, "Enter");
+    await expect(block.locator(".block__checkbox")).not.toBeChecked();
   });
 
-  test("klappt Toggle per Space im Nav-Modus ein und aus", async ({ page }) => {
+  test("klappt Toggle per Space und Enter im Nav-Modus ein und aus", async ({
+    page,
+  }) => {
     const today = todayISO();
     await gotoAppWithBlocks(page, [
       {
@@ -1833,6 +1841,14 @@ test.describe("Vim-Block-Navigation", () => {
     await expect(parent.locator("> .block__children")).toHaveCount(0);
 
     await pressVimNavKey(page, " ");
+    await expect(toggle).toHaveClass(/block__toggle--open/);
+    await expect(nestedBlocks(parent, "text")).toHaveCount(1);
+
+    await pressVimNavKey(page, "Enter");
+    await expect(toggle).toHaveClass(/block__toggle--closed/);
+    await expect(parent.locator("> .block__children")).toHaveCount(0);
+
+    await pressVimNavKey(page, "Enter");
     await expect(toggle).toHaveClass(/block__toggle--open/);
     await expect(nestedBlocks(parent, "text")).toHaveCount(1);
   });

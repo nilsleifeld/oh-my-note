@@ -418,7 +418,7 @@ export function BlockNavigationProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      if (event.key === " ") {
+      if (event.key === " " || event.key === "Enter") {
         if (!selectedBlockId) return;
         const block = getBlock(queryClient, selectedBlockId);
         if (block?.type !== "todo" && block?.type !== "toggle") return;

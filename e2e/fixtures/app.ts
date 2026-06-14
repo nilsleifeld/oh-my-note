@@ -465,6 +465,7 @@ export async function pressVimNavKey(
     | "u"
     | "Tab"
     | " "
+    | "Enter"
     | "Escape",
 ) {
   await page.keyboard.press(key);
