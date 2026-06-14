@@ -6,6 +6,19 @@ import { useToggleBlockOpen } from "../../features/blocks/mutations/useToggleBlo
 import { BlockInput } from "./BlockInput";
 import { onTabIndentOutdent } from "./utils";
 
+function ToggleIcon() {
+  return (
+    <svg
+      className="block__toggle-icon"
+      viewBox="0 0 12 12"
+      fill="currentColor"
+      aria-hidden="true"
+    >
+      <path d="M2.25 4.5 6 8.25 9.75 4.5Z" />
+    </svg>
+  );
+}
+
 export function ToggleBlock(props: BlockContentProps) {
   const changeTitle = useChangeBlockTitle();
   const changeType = useChangeBlockType();
@@ -21,6 +34,7 @@ export function ToggleBlock(props: BlockContentProps) {
     <>
       <button
         className={[
+          "block__marker",
           "block__toggle",
           open ? "block__toggle--open" : "block__toggle--closed",
         ].join(" ")}
@@ -38,14 +52,12 @@ export function ToggleBlock(props: BlockContentProps) {
           });
         }}
       >
-        <span className="block__toggle-icon" aria-hidden="true">
-          ▾
-        </span>
+        <ToggleIcon />
       </button>
       <BlockInput
         block={props.block}
-        multiline={false}
-        inputClass="block__input"
+        multiline
+        inputClass="block__input block__input--multiline"
         onEnter={props.onEnter}
         onBackspaceEmpty={demoteToText}
         onBackspaceAtStart={demoteToText}

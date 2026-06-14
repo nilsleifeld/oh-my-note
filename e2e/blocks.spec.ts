@@ -9,7 +9,6 @@ import {
   blocksInDay,
   changeBlockType,
   emptyDayHint,
-  deleteBlock,
   ensureDaySectionLoaded,
   fillBlock,
   getStoredBlock,
@@ -623,22 +622,6 @@ test.describe("Toggle-Block", () => {
     await expect(blockInput(nestedBlocks(parent, "text").first())).toHaveValue(
       "Child",
     );
-  });
-});
-
-test.describe("Löschen", () => {
-  test.beforeEach(async ({ page }) => {
-    await gotoApp(page);
-  });
-
-  test("löscht einzelnen Block über ×-Button", async ({ page }) => {
-    await addBlock(page, "text");
-    await addBlock(page, "todo");
-    await waitForBlockCount(page, 2);
-
-    await deleteBlock(blocks(page, "text").first());
-    await waitForBlockCount(page, 1);
-    await expect(blocks(page, "todo")).toHaveCount(1);
   });
 });
 

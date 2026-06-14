@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { BlockContentProps } from "../../types/ui";
-import { blockPlaceholders, codeLanguages } from "../../data/blocks";
+import { codeLanguages } from "../../data/blocks";
 import { useChangeBlockLanguage } from "../../features/blocks/mutations/useChangeBlockLanguage";
 import { useChangeBlockTitle } from "../../features/blocks/mutations/useChangeBlockTitle";
 import { usePasteBlockImage } from "../../features/blocks/mutations/usePasteBlockImage";
@@ -89,7 +89,6 @@ export function CodeBlock(props: BlockContentProps) {
           rows={1}
           spellCheck={false}
           value={title}
-          placeholder={blockPlaceholders.code}
           onFocus={() => {
             titleOnFocusRef.current = props.block.properties.title;
           }}

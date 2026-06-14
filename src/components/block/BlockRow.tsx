@@ -110,14 +110,6 @@ export function BlockRow({
           />
         ) : null}
         <BlockTypeSelect block={block} blockId={blockId} />
-        <button
-          className="block__delete"
-          type="button"
-          title="Delete"
-          onClick={remove}
-        >
-          ×
-        </button>
       </div>
       {showChildren ? (
         <div className="block__children">

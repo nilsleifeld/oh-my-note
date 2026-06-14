@@ -4,6 +4,19 @@ import { useChangeBlockType } from "../../features/blocks/mutations/useChangeBlo
 import { usePasteBlockImage } from "../../features/blocks/mutations/usePasteBlockImage";
 import { BlockInput } from "./BlockInput";
 
+function BulletIcon() {
+  return (
+    <svg
+      className="block__bullet-icon"
+      viewBox="0 0 6 6"
+      fill="currentColor"
+      aria-hidden="true"
+    >
+      <circle cx="3" cy="3" r="3" />
+    </svg>
+  );
+}
+
 export function BulletBlock(props: BlockContentProps) {
   const changeTitle = useChangeBlockTitle();
   const changeType = useChangeBlockType();
@@ -15,8 +28,8 @@ export function BulletBlock(props: BlockContentProps) {
 
   return (
     <>
-      <span className="block__bullet" aria-hidden="true">
-        •
+      <span className="block__marker block__bullet" aria-hidden="true">
+        <BulletIcon />
       </span>
       <BlockInput
         block={props.block}

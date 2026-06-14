@@ -7,20 +7,6 @@ export function isHeadingBlockType(type: BlockType): boolean {
   return headingBlockTypes.includes(type);
 }
 
-export const blockPlaceholders: Record<Block["type"], string> = {
-  text: "Empty text block",
-  bullet: "Bullet",
-  todo: "To-do",
-  toggle: "Toggle",
-  code: "Code",
-  image: "Image",
-  h1: "Heading 1",
-  h2: "Heading 2",
-  h3: "Heading 3",
-  h4: "Heading 4",
-  h5: "Heading 5",
-};
-
 export const blockTypeOptions: SelectOption[] = [
   { value: "h1", label: "Heading 1" },
   { value: "h2", label: "Heading 2" },

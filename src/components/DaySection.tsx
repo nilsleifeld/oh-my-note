@@ -117,10 +117,25 @@ export function DaySection({ date, isToday }: DaySectionProps) {
           {!blockIds.length ? (
             <button
               type="button"
-              className="day__empty"
+              className="day__empty block block--placeholder"
               onClick={() => void addChild("text")}
             >
-              Click below to add a block.
+              <div className="block__row">
+                <span className="day__empty__icon" aria-hidden="true">
+                  <svg
+                    className="day__empty__icon-svg"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                  >
+                    <path d="M12 5v14" />
+                    <path d="M5 12h14" />
+                  </svg>
+                </span>
+                <span className="day__empty__label">Block</span>
+              </div>
             </button>
           ) : (
             blockIds.map((blockId) => (

@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from "react";
 import type { Block } from "../../types/models";
-import { blockPlaceholders } from "../../data/blocks";
 import { readImageFromPasteEvent } from "../../utils/clipboardImage";
 import { focusInput, onTabIndentOutdent, resizeTextarea } from "./utils";
 
@@ -72,7 +71,6 @@ export function BlockInput({
   const commonProps = {
     className: inputClass,
     value: title,
-    placeholder: blockPlaceholders[block.type],
     onFocus: () => {
       titleOnFocusRef.current = block.properties.title;
     },

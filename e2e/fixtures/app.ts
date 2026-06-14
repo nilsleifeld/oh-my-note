@@ -113,9 +113,7 @@ export async function ensureDaySectionLoaded(page: Page, date: string) {
 }
 
 export function emptyDayHint(page: Page): Locator {
-  return todaySection(page).getByRole("button", {
-    name: "Click below to add a block.",
-  });
+  return todaySection(page).getByRole("button", { name: "Block" });
 }
 
 export async function addBlock(page: Page, type: BlockType) {
@@ -142,9 +140,9 @@ export function blocks(page: Page, type?: BlockType): Locator {
 }
 
 export function blocksInDay(day: Locator, type?: BlockType): Locator {
-  if (type)
-    return day.locator(`:scope > .day__inner > .day__blocks > .block--${type}`);
-  return day.locator(":scope > .day__inner > .day__blocks > .block");
+  const root = ":scope > .day__inner > .day__blocks";
+  if (type) return day.locator(`${root} > .block--${type}`);
+  return day.locator(`${root} > .block:not(.block--placeholder)`);
 }
 
 export function blockInput(block: Locator): Locator {
@@ -207,11 +205,6 @@ export async function getStoredBlock(page: Page, blockId: string) {
 
 export async function hoverBlockRow(block: Locator) {
   await block.locator("> .block__row").hover();
-}
-
-export async function deleteBlock(block: Locator) {
-  await hoverBlockRow(block);
-  await block.locator("> .block__row .block__delete").click();
 }
 
 export async function openTypeMenu(block: Locator) {

@@ -18,24 +18,26 @@ export function TodoBlock(props: BlockContentProps) {
 
   return (
     <>
-      <input
-        className="block__checkbox"
-        type="checkbox"
-        checked={props.block.properties.checked}
-        onKeyDown={(e) =>
-          onTabIndentOutdent(e, props.onIndent, props.onOutdent)
-        }
-        onChange={(e) => {
-          void toggleTodo.mutateAsync({
-            blockId: props.blockId,
-            checked: e.target.checked,
-          });
-        }}
-      />
+      <span className="block__marker block__marker--checkbox">
+        <input
+          className="block__checkbox"
+          type="checkbox"
+          checked={props.block.properties.checked}
+          onKeyDown={(e) =>
+            onTabIndentOutdent(e, props.onIndent, props.onOutdent)
+          }
+          onChange={(e) => {
+            void toggleTodo.mutateAsync({
+              blockId: props.blockId,
+              checked: e.target.checked,
+            });
+          }}
+        />
+      </span>
       <BlockInput
         block={props.block}
-        multiline={false}
-        inputClass="block__input"
+        multiline
+        inputClass="block__input block__input--multiline"
         onEnter={props.onEnter}
         onBackspaceEmpty={demoteToText}
         onBackspaceAtStart={demoteToText}
