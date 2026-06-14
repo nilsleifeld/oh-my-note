@@ -308,10 +308,27 @@ test.describe("Block-Typ wechseln", () => {
     ).not.toBeChecked();
   });
 
+  test('"> " wandelt Textblock in Toggle um', async ({ page }) => {
+    const block = blocks(page, "text").first();
+    const input = blockInput(block);
+    await input.click();
+    await input.pressSequentially("> ", { delay: 50 });
+
+    await expect(blocks(page, "text")).toHaveCount(0);
+    await expect(blocks(page, "toggle")).toHaveCount(1);
+    await expect(blockInput(blocks(page, "toggle").first())).toHaveValue("");
+    await expect(
+      blocks(page, "toggle").first().locator(".block__toggle"),
+    ).toBeVisible();
+    await expect(
+      blocks(page, "toggle").first().locator(".block__toggle"),
+    ).toHaveClass(/block__toggle--open/);
+  });
+
   test.describe("Shortcuts aus jedem Block-Typ", () => {
     async function typeShortcut(
       block: ReturnType<typeof blocks>,
-      shortcut: "- " | "[] ",
+      shortcut: "- " | "[] " | "> ",
     ) {
       const input = blockInput(block);
       await input.click();
@@ -396,6 +413,27 @@ test.describe("Block-Typ wechseln", () => {
       await expect(blockInput(blocks(page, "todo").first())).toHaveValue("");
     });
 
+    test('"> " wandelt Bullet in Toggle um', async ({ page }) => {
+      await addBlock(page, "bullet");
+      await typeShortcut(blocks(page, "bullet").first(), "> ");
+
+      await expect(blocks(page, "bullet")).toHaveCount(0);
+      await expect(blocks(page, "toggle")).toHaveCount(1);
+      await expect(blockInput(blocks(page, "toggle").first())).toHaveValue("");
+      await expect(
+        blocks(page, "toggle").first().locator(".block__toggle"),
+      ).toBeVisible();
+    });
+
+    test('"> " wandelt Code in Toggle um', async ({ page }) => {
+      await addBlock(page, "code");
+      await typeShortcut(blocks(page, "code").first(), "> ");
+
+      await expect(blocks(page, "code")).toHaveCount(0);
+      await expect(blocks(page, "toggle")).toHaveCount(1);
+      await expect(blockInput(blocks(page, "toggle").first())).toHaveValue("");
+    });
+
     test('"- " behält vorhandenen Inhalt beim Umwandeln', async ({ page }) => {
       await addBlock(page, "todo");
       const block = blocks(page, "todo").first();
@@ -427,6 +465,23 @@ test.describe("Block-Typ wechseln", () => {
       await expect(blocks(page, "todo")).toHaveCount(1);
       await expect(blockInput(blocks(page, "todo").first())).toHaveValue(
         "Abschnitt",
+      );
+    });
+
+    test('"> " behält vorhandenen Inhalt beim Umwandeln', async ({ page }) => {
+      await addBlock(page, "todo");
+      const block = blocks(page, "todo").first();
+      await fillBlock(block, "Aufgabe");
+
+      const input = blockInput(block);
+      await input.click();
+      await input.press("Home");
+      await input.pressSequentially("> ", { delay: 50 });
+
+      await expect(blocks(page, "todo")).toHaveCount(0);
+      await expect(blocks(page, "toggle")).toHaveCount(1);
+      await expect(blockInput(blocks(page, "toggle").first())).toHaveValue(
+        "Aufgabe",
       );
     });
   });
