@@ -1,5 +1,6 @@
 import type { BlockContentProps } from "../../types/ui";
 import { useChangeBlockTitle } from "../../features/blocks/mutations/useChangeBlockTitle";
+import { useChangeBlockType } from "../../features/blocks/mutations/useChangeBlockType";
 import { usePasteBlockImage } from "../../features/blocks/mutations/usePasteBlockImage";
 import { useToggleBlockOpen } from "../../features/blocks/mutations/useToggleBlockOpen";
 import { BlockInput } from "./BlockInput";
@@ -7,9 +8,14 @@ import { onTabIndentOutdent } from "./utils";
 
 export function ToggleBlock(props: BlockContentProps) {
   const changeTitle = useChangeBlockTitle();
+  const changeType = useChangeBlockType();
   const pasteImage = usePasteBlockImage();
   const toggleOpen = useToggleBlockOpen();
   const open = props.block.properties.open;
+
+  const demoteToText = () => {
+    void changeType.mutateAsync({ blockId: props.blockId, type: "text" });
+  };
 
   return (
     <>
@@ -41,7 +47,8 @@ export function ToggleBlock(props: BlockContentProps) {
         multiline={false}
         inputClass="block__input"
         onEnter={props.onEnter}
-        onBackspaceEmpty={props.onBackspaceEmpty}
+        onBackspaceEmpty={demoteToText}
+        onBackspaceAtStart={demoteToText}
         onIndent={props.onIndent}
         onOutdent={props.onOutdent}
         shouldFocus={props.shouldFocus}

@@ -270,6 +270,28 @@ test.describe("Block-Typ wechseln", () => {
     ).toHaveCount(0);
   });
 
+  test("Backspace am Zeilenanfang wandelt Toggle in Text um", async ({
+    page,
+  }) => {
+    const block = blocks(page, "text").first();
+    await changeBlockType(block, "toggle");
+    await fillBlock(blocks(page, "toggle").first(), "Abschnitt");
+
+    const input = blockInput(blocks(page, "toggle").first());
+    await input.click();
+    await input.press("Home");
+    await input.press("Backspace");
+
+    await expect(blocks(page, "toggle")).toHaveCount(0);
+    await expect(blocks(page, "text")).toHaveCount(1);
+    await expect(blockInput(blocks(page, "text").first())).toHaveValue(
+      "Abschnitt",
+    );
+    await expect(
+      blocks(page, "text").first().locator(".block__toggle"),
+    ).toHaveCount(0);
+  });
+
   test('"[] " wandelt Textblock in To-do um', async ({ page }) => {
     const block = blocks(page, "text").first();
     const input = blockInput(block);
