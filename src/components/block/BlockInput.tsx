@@ -3,6 +3,7 @@ import type { Block } from "../../types/models";
 import { useBlockTypeSlashMenu } from "../../features/blocks/useBlockTypeSlashMenu";
 import { readImageFromPasteEvent } from "../../utils/clipboardImage";
 import { BlockTypeSlashMenu } from "./BlockTypeSlashMenu";
+import { useBlockNavigation } from "../../features/blocks/navigation/BlockNavigationProvider";
 import { focusInput, onTabIndentOutdent, resizeTextarea } from "./utils";
 
 type BlockInputProps = {
@@ -38,6 +39,7 @@ export function BlockInput({
   onPasteImage,
   onTitleInput,
 }: BlockInputProps) {
+  const { notifyBlockInputFocus } = useBlockNavigation();
   const [title, setTitle] = useState(block.properties.title);
   const titleOnFocusRef = useRef(block.properties.title);
   const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement>(null);
@@ -86,6 +88,7 @@ export function BlockInput({
     value: title,
     onFocus: () => {
       titleOnFocusRef.current = block.properties.title;
+      notifyBlockInputFocus(block.id);
     },
     onPaste,
     onKeyDown: (e: React.KeyboardEvent) => {

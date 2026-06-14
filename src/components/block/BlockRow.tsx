@@ -1,4 +1,5 @@
 import type { BlockRowProps } from "../../types/ui";
+import { useBlockNavigation } from "../../features/blocks/navigation/BlockNavigationProvider";
 import { isHeadingBlockType } from "../../data/blocks";
 import { uniqueIds } from "../../utils/list";
 import { useBlockQuery } from "../../features/blocks/queries/useBlockQuery";
@@ -31,6 +32,7 @@ export function BlockRow({
   onIndent,
   onOutdent,
 }: BlockRowProps) {
+  const { isNavSelected } = useBlockNavigation();
   const query = useBlockQuery(blockId);
   const deleteBlock = useDeleteBlock(date, () => rootIds);
 
@@ -55,6 +57,7 @@ export function BlockRow({
   }
   if (dragState.draggingId === blockId) className += " block--dragging";
   if (dragState.overId === blockId) className += " block--over";
+  if (isNavSelected(blockId)) className += " block--nav-selected";
 
   const contentProps = {
     blockId,

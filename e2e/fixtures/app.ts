@@ -433,3 +433,39 @@ export async function expectBlockRowVisible(block: Locator, visible: boolean) {
     await expect(row).toBeHidden();
   }
 }
+
+export function navSelectedBlock(page: Page): Locator {
+  return page.locator(".block--nav-selected");
+}
+
+/** Clicks outside block inputs so vim navigation keys are handled globally. */
+export async function focusBlockNavigation(page: Page) {
+  await todaySection(page).locator(".day__header").click();
+}
+
+export async function pressVimRedoKey(page: Page) {
+  await page.keyboard.press("Control+r");
+}
+
+export async function pressVimNavKey(
+  page: Page,
+  key:
+    | "j"
+    | "k"
+    | "i"
+    | "a"
+    | "0"
+    | "d"
+    | "g"
+    | "G"
+    | "y"
+    | "p"
+    | "o"
+    | "O"
+    | "u"
+    | "Tab"
+    | " "
+    | "Escape",
+) {
+  await page.keyboard.press(key);
+}

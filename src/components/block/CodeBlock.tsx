@@ -6,6 +6,7 @@ import { useChangeBlockTitle } from "../../features/blocks/mutations/useChangeBl
 import { usePasteBlockImage } from "../../features/blocks/mutations/usePasteBlockImage";
 import { useBlockTitleShortcuts } from "../../features/blocks/useBlockTitleShortcuts";
 import { useBlockTypeSlashMenu } from "../../features/blocks/useBlockTypeSlashMenu";
+import { useBlockNavigation } from "../../features/blocks/navigation/BlockNavigationProvider";
 import { readImageFromPasteEvent } from "../../utils/clipboardImage";
 import { syncCodeHighlight } from "../../utils/highlight";
 import { Select } from "../ui/Select";
@@ -13,6 +14,7 @@ import { BlockTypeSlashMenu } from "./BlockTypeSlashMenu";
 import { focusInput, onTabIndentOutdent, resizeTextarea } from "./utils";
 
 export function CodeBlock(props: BlockContentProps) {
+  const { notifyBlockInputFocus } = useBlockNavigation();
   const changeTitle = useChangeBlockTitle();
   const changeLanguage = useChangeBlockLanguage();
   const pasteImage = usePasteBlockImage();
@@ -104,6 +106,7 @@ export function CodeBlock(props: BlockContentProps) {
           value={title}
           onFocus={() => {
             titleOnFocusRef.current = props.block.properties.title;
+            notifyBlockInputFocus(props.blockId);
           }}
           onChange={(e) => {
             const next = onTitleInput(e.target.value);

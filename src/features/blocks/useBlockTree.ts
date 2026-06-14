@@ -1,4 +1,5 @@
 import { useCallback, useState } from "react";
+import { useBlockNavigation } from "./navigation/BlockNavigationProvider";
 import { useQueryClient } from "@tanstack/react-query";
 import { createChildBlock } from "../../data/blocks";
 import { createdAtAfter } from "../../utils/date";
@@ -38,7 +39,7 @@ export function useBlockTree({ date, rootBlocksQuery }: UseBlockTreeProps) {
   const queryClient = useQueryClient();
   const drag = useDrag();
   const { apply } = useApplyBlockMutation();
-  const [focusId, setFocusId] = useState<string | null>(null);
+  const { focusId, requestFocus, clearFocusRequest } = useBlockNavigation();
   const [pendingByParentId, setPendingByParentId] = useState<Record<
     string,
     string[]
@@ -73,7 +74,7 @@ export function useBlockTree({ date, rootBlocksQuery }: UseBlockTreeProps) {
           createdAt: createdAtAfter(date, lastRoot?.createdAt),
         });
 
-        setFocusId(child.id);
+        requestFocus(child.id);
         await apply(buildCreateRootChange(child));
         return;
       }
@@ -99,16 +100,16 @@ export function useBlockTree({ date, rootBlocksQuery }: UseBlockTreeProps) {
           nextRoot?.createdAt,
         );
 
-        setFocusId(child.id);
+        requestFocus(child.id);
         await apply(buildCreateRootChange(child));
       } else {
-        setFocusId(child.id);
+        requestFocus(child.id);
         await apply(
           buildCreateChildChange(parent, child, parentInfo.index + 1),
         );
       }
     },
-    [apply, date, getBlock, getRootIds, rootBlocksQuery.data],
+    [apply, date, getBlock, getRootIds, requestFocus, rootBlocksQuery.data],
   );
 
   const rootIdsForDay = useCallback(
@@ -236,10 +237,10 @@ export function useBlockTree({ date, rootBlocksQuery }: UseBlockTreeProps) {
       const updates = await indentBlock(id, rootIds, getBlock);
       if (!updates) return;
 
-      setFocusId(id);
+      requestFocus(id);
       await apply(buildTreeChange(snapshot, updates));
     },
-    [apply, getBlock, getRootIds],
+    [apply, getBlock, getRootIds, requestFocus],
   );
 
   const outdentChild = useCallback(
@@ -271,10 +272,10 @@ export function useBlockTree({ date, rootBlocksQuery }: UseBlockTreeProps) {
       const updates = await outdentBlock(id, rootIds, date, getBlock);
       if (!updates) return;
 
-      setFocusId(id);
+      requestFocus(id);
       await apply(buildTreeChange(snapshot, updates));
     },
-    [apply, date, getBlock, getRootIds],
+    [apply, date, getBlock, getRootIds, requestFocus],
   );
 
   const rowProps: Omit<BlockRowProps, "blockId"> = {
@@ -295,8 +296,8 @@ export function useBlockTree({ date, rootBlocksQuery }: UseBlockTreeProps) {
     },
     onDragEnd: drag.onDragEnd,
     focusId,
-    onFocused: () => setFocusId(null),
-    onRequestFocus: setFocusId,
+    onFocused: clearFocusRequest,
+    onRequestFocus: requestFocus,
     onAddBelow: (type, afterId) => void addChild(type, afterId),
     onIndent: (id) => void indentChild(id),
     onOutdent: (id) => void outdentChild(id),

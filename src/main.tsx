@@ -5,6 +5,7 @@ import { ThemeProvider } from "./features/app/ThemeProvider";
 import { ViewModeProvider, useViewMode } from "./features/app/ViewModeProvider";
 import { BlockHistoryProvider } from "./features/blocks/history/BlockHistoryProvider";
 import { FolderProvider } from "./features/folder/FolderProvider";
+import { BlockNavigationProvider } from "./features/blocks/navigation/BlockNavigationProvider";
 import { DragProvider } from "./features/blocks/drag/DragProvider";
 import { App } from "./components/App";
 import { AppFooter } from "./components/AppFooter";
@@ -43,12 +44,14 @@ createRoot(root).render(
         <ViewModeProvider>
           <BlockHistoryProvider>
             <DragProvider>
-              <div className="app-layout">
-                <FolderProvider>
-                  <AppShell />
-                </FolderProvider>
-              </div>
-              <AppFooter />
+              <BlockNavigationProvider>
+                <div className="app-layout">
+                  <FolderProvider>
+                    <AppShell />
+                  </FolderProvider>
+                </div>
+                <AppFooter />
+              </BlockNavigationProvider>
             </DragProvider>
           </BlockHistoryProvider>
         </ViewModeProvider>

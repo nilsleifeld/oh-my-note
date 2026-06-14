@@ -33,6 +33,10 @@ import {
   typeInBlockAndPress,
   typeSlashInBlock,
   waitForBlockCount,
+  focusBlockNavigation,
+  navSelectedBlock,
+  pressVimNavKey,
+  pressVimRedoKey,
 } from "./fixtures/app";
 
 test.describe("Block-Erstellung", () => {
@@ -1309,5 +1313,602 @@ test.describe("Slash-Befehl", () => {
 
     await expect(blocks(page, "h1")).toHaveCount(1);
     await expect(blocks(page, "code")).toHaveCount(0);
+  });
+});
+
+test.describe("Vim-Block-Navigation", () => {
+  const seedTextBlock = (
+    id: string,
+    title: string,
+    day: string,
+    createdAt: string,
+    parentId: string | null = null,
+    content: string[] = [],
+  ) => ({
+    id,
+    type: "text" as const,
+    parentId,
+    day,
+    createdAt,
+    content,
+    properties: {
+      title,
+      checked: false,
+      language: "",
+      imageData: "",
+      open: true,
+    },
+  });
+
+  test("navigiert mit j und k zwischen Blöcken", async ({ page }) => {
+    const today = todayISO();
+    await gotoAppWithBlocks(page, [
+      seedTextBlock("nav-a", "Alpha", today, `${today}T10:00:00.000Z`),
+      seedTextBlock("nav-b", "Beta", today, `${today}T11:00:00.000Z`),
+      seedTextBlock("nav-c", "Gamma", today, `${today}T12:00:00.000Z`),
+    ]);
+
+    const blockA = page.locator('[data-block-id="nav-a"]');
+    const blockB = page.locator('[data-block-id="nav-b"]');
+    const blockC = page.locator('[data-block-id="nav-c"]');
+
+    await focusBlockNavigation(page);
+    await pressVimNavKey(page, "k");
+    await expect(navSelectedBlock(page)).toHaveAttribute(
+      "data-block-id",
+      "nav-c",
+    );
+
+    await pressVimNavKey(page, "k");
+    await expect(navSelectedBlock(page)).toHaveAttribute(
+      "data-block-id",
+      "nav-b",
+    );
+
+    await pressVimNavKey(page, "j");
+    await expect(navSelectedBlock(page)).toHaveAttribute(
+      "data-block-id",
+      "nav-c",
+    );
+
+    await pressVimNavKey(page, "j");
+    await expect(navSelectedBlock(page)).toHaveAttribute(
+      "data-block-id",
+      "nav-c",
+    );
+
+    await expect(blockA).not.toHaveClass(/block--nav-selected/);
+    await expect(blockB).not.toHaveClass(/block--nav-selected/);
+    await expect(blockC).toHaveClass(/block--nav-selected/);
+  });
+
+  test("betritt Input-Modus mit i am Zeilenanfang und verlässt ihn mit Escape", async ({
+    page,
+  }) => {
+    const today = todayISO();
+    await gotoAppWithBlocks(page, [
+      seedTextBlock("nav-edit", "Start", today, `${today}T10:00:00.000Z`),
+    ]);
+
+    const block = page.locator('[data-block-id="nav-edit"]');
+
+    await focusBlockNavigation(page);
+    await pressVimNavKey(page, "k");
+    await expect(navSelectedBlock(page)).toHaveAttribute(
+      "data-block-id",
+      "nav-edit",
+    );
+
+    await pressVimNavKey(page, "i");
+    await expect(blockInput(block)).toBeFocused();
+    await expect(block).not.toHaveClass(/block--nav-selected/);
+
+    await page.keyboard.type("Neu ");
+    await pressVimNavKey(page, "Escape");
+    await expect(blockInput(block)).not.toBeFocused();
+    await expect(block).toHaveClass(/block--nav-selected/);
+    await expect(blockInput(block)).toHaveValue("Neu Start");
+  });
+
+  test("navigiert durch verschachtelte Blöcke", async ({ page }) => {
+    const today = todayISO();
+    await gotoAppWithBlocks(page, [
+      seedTextBlock(
+        "nav-parent",
+        "Parent",
+        today,
+        `${today}T10:00:00.000Z`,
+        null,
+        ["nav-child"],
+      ),
+      seedTextBlock(
+        "nav-child",
+        "Child",
+        today,
+        `${today}T10:30:00.000Z`,
+        "nav-parent",
+      ),
+      seedTextBlock("nav-next", "Next", today, `${today}T11:00:00.000Z`),
+    ]);
+
+    await focusBlockNavigation(page);
+    await pressVimNavKey(page, "k");
+    await expect(navSelectedBlock(page)).toHaveAttribute(
+      "data-block-id",
+      "nav-next",
+    );
+
+    await pressVimNavKey(page, "k");
+    await expect(navSelectedBlock(page)).toHaveAttribute(
+      "data-block-id",
+      "nav-child",
+    );
+
+    await pressVimNavKey(page, "k");
+    await expect(navSelectedBlock(page)).toHaveAttribute(
+      "data-block-id",
+      "nav-parent",
+    );
+  });
+
+  test("ignoriert j und k im Input-Modus", async ({ page }) => {
+    const today = todayISO();
+    await gotoAppWithBlocks(page, [
+      seedTextBlock("nav-type-a", "A", today, `${today}T10:00:00.000Z`),
+      seedTextBlock("nav-type-b", "B", today, `${today}T11:00:00.000Z`),
+    ]);
+
+    const block = page.locator('[data-block-id="nav-type-a"]');
+
+    await focusBlockNavigation(page);
+    await pressVimNavKey(page, "j");
+    await pressVimNavKey(page, "a");
+    await expect(blockInput(block)).toBeFocused();
+
+    await page.keyboard.type("jkjk");
+    await expect(blockInput(block)).toHaveValue("Ajkjk");
+    await expect(navSelectedBlock(page)).toHaveCount(0);
+  });
+
+  test("betritt Input-Modus mit a am Zeilenende", async ({ page }) => {
+    const today = todayISO();
+    await gotoAppWithBlocks(page, [
+      seedTextBlock("nav-append", "Hello", today, `${today}T10:00:00.000Z`),
+    ]);
+
+    const block = page.locator('[data-block-id="nav-append"]');
+
+    await focusBlockNavigation(page);
+    await pressVimNavKey(page, "k");
+    await pressVimNavKey(page, "a");
+    await expect(blockInput(block)).toBeFocused();
+
+    await page.keyboard.type(" Welt");
+    await pressVimNavKey(page, "Escape");
+    await expect(blockInput(block)).toHaveValue("Hello Welt");
+  });
+
+  test("betritt Input-Modus mit 0i am Zeilenanfang", async ({ page }) => {
+    const today = todayISO();
+    await gotoAppWithBlocks(page, [
+      seedTextBlock("nav-zero-i", "Hello", today, `${today}T10:00:00.000Z`),
+    ]);
+
+    const block = page.locator('[data-block-id="nav-zero-i"]');
+
+    await focusBlockNavigation(page);
+    await pressVimNavKey(page, "k");
+    await pressVimNavKey(page, "0");
+    await pressVimNavKey(page, "i");
+    await expect(blockInput(block)).toBeFocused();
+
+    await page.keyboard.type("Hi ");
+    await pressVimNavKey(page, "Escape");
+    await expect(blockInput(block)).toHaveValue("Hi Hello");
+  });
+
+  test("wechselt per Mausklick direkt von vim-ausgewähltem Block zu anderem Block", async ({
+    page,
+  }) => {
+    const today = todayISO();
+    await gotoAppWithBlocks(page, [
+      seedTextBlock("nav-click-a", "Alpha", today, `${today}T10:00:00.000Z`),
+      seedTextBlock("nav-click-b", "Beta", today, `${today}T11:00:00.000Z`),
+    ]);
+
+    const blockA = page.locator('[data-block-id="nav-click-a"]');
+    const blockB = page.locator('[data-block-id="nav-click-b"]');
+
+    await focusBlockNavigation(page);
+    await pressVimNavKey(page, "j");
+    await expect(blockA).toHaveClass(/block--nav-selected/);
+
+    await blockB.locator("> .block__row").click();
+    await expect(blockInput(blockB)).toBeFocused();
+    await expect(blockA).not.toHaveClass(/block--nav-selected/);
+    await expect(blockB).not.toHaveClass(/block--nav-selected/);
+  });
+
+  test("löscht Block mit dd und selektiert Zeile darunter", async ({
+    page,
+  }) => {
+    const today = todayISO();
+    await gotoAppWithBlocks(page, [
+      seedTextBlock("dd-a", "Alpha", today, `${today}T10:00:00.000Z`),
+      seedTextBlock("dd-b", "Beta", today, `${today}T11:00:00.000Z`),
+      seedTextBlock("dd-c", "Gamma", today, `${today}T12:00:00.000Z`),
+    ]);
+
+    await focusBlockNavigation(page);
+    await pressVimNavKey(page, "k");
+    await pressVimNavKey(page, "k");
+    await expect(navSelectedBlock(page)).toHaveAttribute(
+      "data-block-id",
+      "dd-b",
+    );
+
+    await pressVimNavKey(page, "d");
+    await pressVimNavKey(page, "d");
+
+    await expect(page.locator('[data-block-id="dd-b"]')).toHaveCount(0);
+    await expect(blocks(page)).toHaveCount(2);
+    await expect(navSelectedBlock(page)).toHaveAttribute(
+      "data-block-id",
+      "dd-c",
+    );
+  });
+
+  test("erstellt mit o neuen Block darunter und betritt Input-Modus", async ({
+    page,
+  }) => {
+    const today = todayISO();
+    await gotoAppWithBlocks(page, [
+      seedTextBlock("o-a", "Alpha", today, `${today}T10:00:00.000Z`),
+      seedTextBlock("o-b", "Beta", today, `${today}T11:00:00.000Z`),
+    ]);
+
+    await focusBlockNavigation(page);
+    await pressVimNavKey(page, "k");
+    await expect(navSelectedBlock(page)).toHaveAttribute(
+      "data-block-id",
+      "o-b",
+    );
+
+    await pressVimNavKey(page, "o");
+
+    await expect(blocks(page)).toHaveCount(3);
+    const newBlock = blocks(page).nth(2);
+    await expect(blockInput(newBlock)).toBeFocused();
+    await expect(blockInput(newBlock)).toHaveValue("");
+    await expect(newBlock).toHaveClass(/block--text/);
+    await expect(navSelectedBlock(page)).toHaveCount(0);
+  });
+
+  test("erstellt mit O neuen Block darüber und betritt Input-Modus", async ({
+    page,
+  }) => {
+    const today = todayISO();
+    await gotoAppWithBlocks(page, [
+      seedTextBlock("O-a", "Alpha", today, `${today}T10:00:00.000Z`),
+      seedTextBlock("O-b", "Beta", today, `${today}T11:00:00.000Z`),
+    ]);
+
+    await focusBlockNavigation(page);
+    await pressVimNavKey(page, "k");
+    await expect(navSelectedBlock(page)).toHaveAttribute(
+      "data-block-id",
+      "O-b",
+    );
+
+    await pressVimNavKey(page, "O");
+
+    await expect(blocks(page)).toHaveCount(3);
+    const newBlock = blocks(page).nth(1);
+    await expect(blockInput(newBlock)).toBeFocused();
+    await expect(blockInput(newBlock)).toHaveValue("");
+    await expect(blocks(page).nth(2)).toHaveAttribute("data-block-id", "O-b");
+    await expect(navSelectedBlock(page)).toHaveCount(0);
+  });
+
+  test("erstellt mit o To-do unter ausgewähltem To-do", async ({ page }) => {
+    const today = todayISO();
+    await gotoAppWithBlocks(page, [
+      {
+        id: "o-todo",
+        type: "todo" as const,
+        parentId: null,
+        day: today,
+        createdAt: `${today}T10:00:00.000Z`,
+        content: [],
+        properties: {
+          title: "Aufgabe",
+          checked: false,
+          language: "",
+          imageData: "",
+          open: true,
+        },
+      },
+    ]);
+
+    await focusBlockNavigation(page);
+    await pressVimNavKey(page, "k");
+    await pressVimNavKey(page, "o");
+
+    await expect(blocks(page, "todo")).toHaveCount(2);
+    const newBlock = blocks(page, "todo").nth(1);
+    await expect(blockInput(newBlock)).toBeFocused();
+    await expect(newBlock).toHaveClass(/block--todo/);
+  });
+
+  test("macht mit u Undo nach dd", async ({ page }) => {
+    const today = todayISO();
+    await gotoAppWithBlocks(page, [
+      seedTextBlock("u-a", "Alpha", today, `${today}T10:00:00.000Z`),
+      seedTextBlock("u-b", "Beta", today, `${today}T11:00:00.000Z`),
+    ]);
+
+    await focusBlockNavigation(page);
+    await pressVimNavKey(page, "k");
+    await expect(navSelectedBlock(page)).toHaveAttribute(
+      "data-block-id",
+      "u-b",
+    );
+
+    await pressVimNavKey(page, "d");
+    await pressVimNavKey(page, "d");
+
+    await expect(page.locator('[data-block-id="u-b"]')).toHaveCount(0);
+    await expect(blocks(page)).toHaveCount(1);
+
+    await pressVimNavKey(page, "u");
+
+    await expect(page.locator('[data-block-id="u-b"]')).toHaveCount(1);
+    await expect(blocks(page)).toHaveCount(2);
+    await expect(blockInput(page.locator('[data-block-id="u-b"]'))).toHaveValue(
+      "Beta",
+    );
+  });
+
+  test("macht mit Ctrl+r Redo nach u", async ({ page }) => {
+    const today = todayISO();
+    await gotoAppWithBlocks(page, [
+      seedTextBlock("r-a", "Alpha", today, `${today}T10:00:00.000Z`),
+      seedTextBlock("r-b", "Beta", today, `${today}T11:00:00.000Z`),
+    ]);
+
+    await focusBlockNavigation(page);
+    await pressVimNavKey(page, "k");
+    await pressVimNavKey(page, "d");
+    await pressVimNavKey(page, "d");
+
+    await expect(page.locator('[data-block-id="r-b"]')).toHaveCount(0);
+
+    await pressVimNavKey(page, "u");
+    await expect(page.locator('[data-block-id="r-b"]')).toHaveCount(1);
+
+    await pressVimRedoKey(page);
+
+    await expect(page.locator('[data-block-id="r-b"]')).toHaveCount(0);
+    await expect(blocks(page)).toHaveCount(1);
+  });
+
+  test("springt mit gg und G zum ersten und letzten sichtbaren Block", async ({
+    page,
+  }) => {
+    const today = todayISO();
+    await gotoAppWithBlocks(page, [
+      seedTextBlock("gg-a", "Alpha", today, `${today}T10:00:00.000Z`),
+      seedTextBlock("gg-b", "Beta", today, `${today}T11:00:00.000Z`),
+      seedTextBlock("gg-c", "Gamma", today, `${today}T12:00:00.000Z`),
+    ]);
+
+    await focusBlockNavigation(page);
+    await pressVimNavKey(page, "k");
+    await expect(navSelectedBlock(page)).toHaveAttribute(
+      "data-block-id",
+      "gg-c",
+    );
+
+    await pressVimNavKey(page, "g");
+    await pressVimNavKey(page, "g");
+    await expect(navSelectedBlock(page)).toHaveAttribute(
+      "data-block-id",
+      "gg-a",
+    );
+
+    await pressVimNavKey(page, "G");
+    await expect(navSelectedBlock(page)).toHaveAttribute(
+      "data-block-id",
+      "gg-c",
+    );
+  });
+
+  test("rückt im Nav-Modus mit Tab und Shift+Tab ein und aus", async ({
+    page,
+  }) => {
+    const today = todayISO();
+    await gotoAppWithBlocks(page, [
+      seedTextBlock("tab-a", "Alpha", today, `${today}T10:00:00.000Z`),
+      seedTextBlock("tab-b", "Beta", today, `${today}T11:00:00.000Z`),
+    ]);
+
+    const parent = page.locator('[data-block-id="tab-a"]');
+    const child = page.locator('[data-block-id="tab-b"]');
+
+    await focusBlockNavigation(page);
+    await pressVimNavKey(page, "k");
+    await expect(navSelectedBlock(page)).toHaveAttribute(
+      "data-block-id",
+      "tab-b",
+    );
+
+    await pressVimNavKey(page, "Tab");
+    await expect(parent.locator("> .block__children")).toBeVisible();
+    await expect(nestedBlocks(parent, "text")).toHaveAttribute(
+      "data-block-id",
+      "tab-b",
+    );
+
+    await page.keyboard.press("Shift+Tab");
+    await expect(parent.locator("> .block__children")).toHaveCount(0);
+    await expect(child).toBeVisible();
+  });
+
+  test("toggelt To-do per Space im Nav-Modus", async ({ page }) => {
+    const today = todayISO();
+    await gotoAppWithBlocks(page, [
+      {
+        id: "space-todo",
+        type: "todo" as const,
+        parentId: null,
+        day: today,
+        createdAt: `${today}T10:00:00.000Z`,
+        content: [],
+        properties: {
+          title: "Aufgabe",
+          checked: false,
+          language: "",
+          imageData: "",
+          open: true,
+        },
+      },
+    ]);
+
+    const block = page.locator('[data-block-id="space-todo"]');
+
+    await focusBlockNavigation(page);
+    await pressVimNavKey(page, "k");
+    await expect(block.locator(".block__checkbox")).not.toBeChecked();
+
+    await pressVimNavKey(page, " ");
+    await expect(block.locator(".block__checkbox")).toBeChecked();
+    await expect(blockInput(block)).not.toBeFocused();
+
+    await pressVimNavKey(page, " ");
+    await expect(block.locator(".block__checkbox")).not.toBeChecked();
+  });
+
+  test("klappt Toggle per Space im Nav-Modus ein und aus", async ({ page }) => {
+    const today = todayISO();
+    await gotoAppWithBlocks(page, [
+      {
+        id: "space-toggle",
+        type: "toggle" as const,
+        parentId: null,
+        day: today,
+        createdAt: `${today}T10:00:00.000Z`,
+        content: ["space-toggle-child"],
+        properties: {
+          title: "Abschnitt",
+          checked: false,
+          language: "",
+          imageData: "",
+          open: true,
+        },
+      },
+      seedTextBlock(
+        "space-toggle-child",
+        "Kind",
+        today,
+        `${today}T10:30:00.000Z`,
+        "space-toggle",
+      ),
+    ]);
+
+    const parent = page.locator('[data-block-id="space-toggle"]');
+    const toggle = parent.locator(".block__toggle");
+
+    await focusBlockNavigation(page);
+    await pressVimNavKey(page, "g");
+    await pressVimNavKey(page, "g");
+    await expect(navSelectedBlock(page)).toHaveAttribute(
+      "data-block-id",
+      "space-toggle",
+    );
+    await expect(toggle).toHaveClass(/block__toggle--open/);
+    await expect(nestedBlocks(parent, "text")).toHaveCount(1);
+
+    await pressVimNavKey(page, " ");
+    await expect(toggle).toHaveClass(/block__toggle--closed/);
+    await expect(parent.locator("> .block__children")).toHaveCount(0);
+
+    await pressVimNavKey(page, " ");
+    await expect(toggle).toHaveClass(/block__toggle--open/);
+    await expect(nestedBlocks(parent, "text")).toHaveCount(1);
+  });
+
+  test("kopiert und fügt Block mit yy und p ein", async ({ page }) => {
+    const today = todayISO();
+    await gotoAppWithBlocks(page, [
+      seedTextBlock("yy-a", "Alpha", today, `${today}T10:00:00.000Z`),
+      seedTextBlock("yy-b", "Beta", today, `${today}T11:00:00.000Z`),
+      seedTextBlock(
+        "yy-parent",
+        "Parent",
+        today,
+        `${today}T12:00:00.000Z`,
+        null,
+        ["yy-child"],
+      ),
+      seedTextBlock(
+        "yy-child",
+        "Kind",
+        today,
+        `${today}T12:30:00.000Z`,
+        "yy-parent",
+      ),
+    ]);
+
+    await focusBlockNavigation(page);
+    await pressVimNavKey(page, "G");
+    await expect(navSelectedBlock(page)).toHaveAttribute(
+      "data-block-id",
+      "yy-child",
+    );
+    await pressVimNavKey(page, "k");
+    await expect(navSelectedBlock(page)).toHaveAttribute(
+      "data-block-id",
+      "yy-parent",
+    );
+
+    await pressVimNavKey(page, "y");
+    await pressVimNavKey(page, "y");
+    await expect(blocks(page)).toHaveCount(3);
+
+    await pressVimNavKey(page, "g");
+    await pressVimNavKey(page, "g");
+    await expect(navSelectedBlock(page)).toHaveAttribute(
+      "data-block-id",
+      "yy-a",
+    );
+
+    await pressVimNavKey(page, "p");
+
+    await expect(blocks(page)).toHaveCount(4);
+    await expect(
+      todaySection(page).locator(".block:not(.block--placeholder)"),
+    ).toHaveCount(6);
+
+    const pastedParent = navSelectedBlock(page);
+    await expect(blockInput(pastedParent)).toHaveValue("Parent");
+    await expect(pastedParent).not.toHaveAttribute(
+      "data-block-id",
+      "yy-parent",
+    );
+    await expect(
+      blockInput(page.locator('[data-block-id="yy-parent"]')),
+    ).toHaveValue("Parent");
+    await expect(nestedBlocks(pastedParent, "text")).toHaveCount(1);
+    await expect(
+      blockInput(nestedBlocks(pastedParent, "text").first()),
+    ).toHaveValue("Kind");
+    await expect(
+      blockInput(
+        nestedBlocks(
+          page.locator('[data-block-id="yy-parent"]'),
+          "text",
+        ).first(),
+      ),
+    ).toHaveValue("Kind");
   });
 });

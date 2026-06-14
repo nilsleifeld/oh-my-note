@@ -205,6 +205,12 @@
     background: var(--ln-accent);
   }
 
+  .block--nav-selected > .block__row {
+    background: var(--ln-accent);
+    outline: 1px solid var(--ln-border);
+    outline-offset: calc(var(--spacing) * -0.5);
+  }
+
   .block__children {
     display: flex;
     flex-direction: column;

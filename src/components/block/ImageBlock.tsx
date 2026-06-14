@@ -1,5 +1,6 @@
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import type { BlockContentProps } from "../../types/ui";
+import { useBlockNavigation } from "../../features/blocks/navigation/BlockNavigationProvider";
 import { usePasteBlockImage } from "../../features/blocks/mutations/usePasteBlockImage";
 import {
   readImageFromFile,
@@ -8,6 +9,7 @@ import {
 import { focusInput } from "./utils";
 
 export function ImageBlock(props: BlockContentProps) {
+  const { notifyBlockInputFocus } = useBlockNavigation();
   const pasteImage = usePasteBlockImage();
   const containerRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -23,12 +25,18 @@ export function ImageBlock(props: BlockContentProps) {
     void readImageFromFile(file).then(saveImage);
   };
 
+  useEffect(() => {
+    const el = containerRef.current;
+    if (el) focusInput(el, props.shouldFocus, props.onFocused);
+  }, [props.blockId, props.onFocused, props.shouldFocus]);
+
   return (
     <div
       ref={containerRef}
       className="block__image"
       tabIndex={0}
       onFocus={() => {
+        notifyBlockInputFocus(props.blockId);
         const el = containerRef.current;
         if (el) focusInput(el, props.shouldFocus, props.onFocused);
       }}
