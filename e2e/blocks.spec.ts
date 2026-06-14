@@ -248,6 +248,28 @@ test.describe("Block-Typ wechseln", () => {
     ).toBeVisible();
   });
 
+  test("Backspace am Zeilenanfang wandelt To-do in Text um", async ({
+    page,
+  }) => {
+    const block = blocks(page, "text").first();
+    await changeBlockType(block, "todo");
+    await fillBlock(blocks(page, "todo").first(), "Aufgabe");
+
+    const input = blockInput(blocks(page, "todo").first());
+    await input.click();
+    await input.press("Home");
+    await input.press("Backspace");
+
+    await expect(blocks(page, "todo")).toHaveCount(0);
+    await expect(blocks(page, "text")).toHaveCount(1);
+    await expect(blockInput(blocks(page, "text").first())).toHaveValue(
+      "Aufgabe",
+    );
+    await expect(
+      blocks(page, "text").first().locator(".block__checkbox"),
+    ).toHaveCount(0);
+  });
+
   test('"[] " wandelt Textblock in To-do um', async ({ page }) => {
     const block = blocks(page, "text").first();
     const input = blockInput(block);
