@@ -29,7 +29,7 @@
     pointer-events: none;
   }
 
-  .app--todos .block:not(.block--todo) > .block__row,
+  .app--todos .block:not(.block--todo) > .block__line,
   .app--todos
     .block:not(.block--todo):not(:has(.block--todo))
     > .block__placeholder,
@@ -55,7 +55,7 @@
     .block--todo.block--todo-checked:not(
       :has(.block--todo:not(.block--todo-checked))
     )
-    > .block__row {
+    > .block__line {
     max-height: 0;
     min-height: 0;
     padding-block: 0;
@@ -73,7 +73,7 @@
 
   .app--todos-open
     .block:not(.block--todo):not(:has(.block--todo:not(.block--todo-checked)))
-    > .block__row,
+    > .block__line,
   .app--todos-open
     .block:not(.block--todo):not(:has(.block--todo:not(.block--todo-checked)))
     > .block__placeholder,
@@ -102,7 +102,7 @@
     .block--todo:not(.block--todo-checked):not(
       :has(.block--todo.block--todo-checked)
     )
-    > .block__row {
+    > .block__line {
     max-height: 0;
     min-height: 0;
     padding-block: 0;
@@ -120,7 +120,7 @@
 
   .app--todos-done
     .block:not(.block--todo):not(:has(.block--todo.block--todo-checked))
-    > .block__row,
+    > .block__line,
   .app--todos-done
     .block:not(.block--todo):not(:has(.block--todo.block--todo-checked))
     > .block__placeholder,
@@ -197,15 +197,60 @@
     max-width: calc(var(--spacing) * 20);
   }
 
+  .block__comments-btn {
+    display: flex;
+    align-items: center;
+    gap: calc(var(--spacing) * 0.5);
+    height: 100%;
+  }
+
+  .block__comments-count {
+    font-size: var(--text-sm);
+    line-height: 1;
+    color: var(--ln-muted-foreground);
+    min-width: calc(var(--spacing) * 2);
+    text-align: right;
+  }
+
+  .block__comments-trigger {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: calc(var(--spacing) * 6);
+    height: calc(var(--spacing) * 6);
+    padding: 0;
+    border: none;
+    border-radius: var(--radius);
+    background: transparent;
+    color: var(--ln-muted-foreground);
+    cursor: pointer;
+    transition:
+      background 0.15s ease,
+      color 0.15s ease;
+  }
+
+  .block__comments-trigger:hover,
+  .block__comments-trigger:focus-visible,
+  .block__comments-btn--active .block__comments-trigger {
+    background: var(--ln-accent);
+    color: var(--ln-foreground);
+    outline: none;
+  }
+
+  .block__comments-icon {
+    width: calc(var(--spacing) * 4);
+    height: calc(var(--spacing) * 4);
+  }
+
   .block--dragging {
     opacity: 0.4;
   }
 
-  .block--over > .block__row {
+  .block--over > .block__line > .block__row {
     background: var(--ln-accent);
   }
 
-  .block--nav-selected > .block__row {
+  .block--nav-selected > .block__line > .block__row {
     background: var(--ln-accent);
     outline: 1px solid var(--ln-border);
     outline-offset: calc(var(--spacing) * -0.5);
@@ -317,12 +362,12 @@
     field-sizing: content;
   }
 
-  .block--code > .block__row {
+  .block--code > .block__line > .block__row {
     background: var(--ln-muted);
   }
 
-  .block--code > .block__row:hover,
-  .block--code.block--over > .block__row {
+  .block--code > .block__line > .block__row:hover,
+  .block--code.block--over > .block__line > .block__row {
     background: var(--ln-accent);
   }
 
@@ -365,27 +410,27 @@
     margin-bottom: calc(var(--spacing) * 2);
   }
 
-  .block--h1 > .block__row .block__input {
+  .block--h1 > .block__line > .block__row .block__input {
     font-size: var(--text-3xl);
     line-height: var(--text-3xl--line-height);
   }
 
-  .block--h2 > .block__row .block__input {
+  .block--h2 > .block__line > .block__row .block__input {
     font-size: var(--text-2xl);
     line-height: var(--text-2xl--line-height);
   }
 
-  .block--h3 > .block__row .block__input {
+  .block--h3 > .block__line > .block__row .block__input {
     font-size: var(--text-xl);
     line-height: var(--text-xl--line-height);
   }
 
-  .block--h4 > .block__row .block__input {
+  .block--h4 > .block__line > .block__row .block__input {
     font-size: var(--text-lg);
     line-height: var(--text-lg--line-height);
   }
 
-  .block--h5 > .block__row .block__input {
+  .block--h5 > .block__line > .block__row .block__input {
     font-size: var(--text-base);
     line-height: var(--text-base--line-height);
   }

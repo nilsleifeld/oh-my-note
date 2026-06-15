@@ -15,6 +15,7 @@ export function cloneBlock(block: Block): Block {
     createdAt: block.createdAt,
     content: [...block.content],
     properties: { ...block.properties },
+    comments: (block.comments ?? []).map((comment) => ({ ...comment })),
   };
 }
 

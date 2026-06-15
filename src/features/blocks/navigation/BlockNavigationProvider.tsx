@@ -66,7 +66,7 @@ const CHORD_PREFIX_TIMEOUT_MS = 1000;
 
 function isInteractiveBlockTarget(target: HTMLElement): boolean {
   return !!target.closest(
-    ".block__handle, .block__type-select, .select, .block__checkbox, .block__toggle, .block__image-pick, .block-slash-menu, input[type=file]",
+    ".block__handle, .block__type-select, .block__comments-btn, .select, .block__checkbox, .block__toggle, .block__image-pick, .block-slash-menu, input[type=file]",
   );
 }
 

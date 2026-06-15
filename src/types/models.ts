@@ -23,6 +23,13 @@ export type BlockProperties = {
   open: boolean;
 };
 
+export type BlockComment = {
+  id: string;
+  text: string;
+  /** ISO timestamp */
+  createdAt: string;
+};
+
 export type Block = {
   id: string;
   type: BlockType;
@@ -34,6 +41,7 @@ export type Block = {
   /** Child block IDs (tree structure) */
   content: string[];
   properties: BlockProperties;
+  comments: BlockComment[];
 };
 
 export type BlockSortField = "createdAt";

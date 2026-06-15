@@ -5,6 +5,7 @@ import { uniqueIds } from "../../utils/list";
 import { useBlockQuery } from "../../features/blocks/queries/useBlockQuery";
 import { useDeleteBlock } from "../../features/blocks/mutations/useDeleteBlock";
 import { BlockHandle, BlockTypeSelect } from "./BlockHandle";
+import { BlockCommentsButton } from "./BlockCommentsButton";
 import { Skeleton } from "../ui/Skeleton";
 import { CodeBlock } from "./CodeBlock";
 import { HeadingBlock } from "./HeadingBlock";
@@ -58,6 +59,7 @@ export function BlockRow({
   if (dragState.draggingId === blockId) className += " block--dragging";
   if (dragState.overId === blockId) className += " block--over";
   if (isNavSelected(blockId)) className += " block--nav-selected";
+  if (block.comments.length > 0) className += " block--has-comments";
 
   const contentProps = {
     blockId,
@@ -91,30 +93,36 @@ export function BlockRow({
         onDrop(blockId);
       }}
     >
-      <div className="block__row">
-        <BlockHandle
-          blockId={blockId}
-          onDragStart={onDragStart}
-          onDragEnd={onDragEnd}
-        />
-        {block.type === "text" ? <TextBlock {...contentProps} /> : null}
-        {block.type === "bullet" ? <BulletBlock {...contentProps} /> : null}
-        {block.type === "todo" ? <TodoBlock {...contentProps} /> : null}
-        {block.type === "toggle" ? <ToggleBlock {...contentProps} /> : null}
-        {block.type === "code" ? <CodeBlock {...contentProps} /> : null}
-        {block.type === "image" ? (
-          <ImageBlock
-            {...contentProps}
-            onEnter={() => onAddBelow("text", blockId)}
+      <div className="block__line">
+        <div className="block__row">
+          <BlockHandle
+            blockId={blockId}
+            onDragStart={onDragStart}
+            onDragEnd={onDragEnd}
           />
-        ) : null}
-        {isHeadingBlockType(block.type) ? (
-          <HeadingBlock
-            {...contentProps}
-            onEnter={() => onAddBelow("text", blockId)}
+          {block.type === "text" ? <TextBlock {...contentProps} /> : null}
+          {block.type === "bullet" ? <BulletBlock {...contentProps} /> : null}
+          {block.type === "todo" ? <TodoBlock {...contentProps} /> : null}
+          {block.type === "toggle" ? <ToggleBlock {...contentProps} /> : null}
+          {block.type === "code" ? <CodeBlock {...contentProps} /> : null}
+          {block.type === "image" ? (
+            <ImageBlock
+              {...contentProps}
+              onEnter={() => onAddBelow("text", blockId)}
+            />
+          ) : null}
+          {isHeadingBlockType(block.type) ? (
+            <HeadingBlock
+              {...contentProps}
+              onEnter={() => onAddBelow("text", blockId)}
+            />
+          ) : null}
+          <BlockTypeSelect block={block} blockId={blockId} />
+          <BlockCommentsButton
+            blockId={blockId}
+            commentCount={block.comments.length}
           />
-        ) : null}
-        <BlockTypeSelect block={block} blockId={blockId} />
+        </div>
       </div>
       {showChildren ? (
         <div className="block__children">

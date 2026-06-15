@@ -8,6 +8,7 @@ import type {
 import {
   collectSubtreeIds,
   matchesFilter,
+  normalizeBlock,
   pageItems,
   sortBlocks,
   upsertBlock,
@@ -34,7 +35,7 @@ function initialMockBlocks(): Block[] {
     typeof window !== "undefined" &&
     Array.isArray(window.__E2E_MOCK_BLOCKS__)
   ) {
-    return window.__E2E_MOCK_BLOCKS__;
+    return window.__E2E_MOCK_BLOCKS__.map(normalizeBlock);
   }
   return import.meta.env.VITE_SEED === "true" ? createMockSeedBlocks() : [];
 }
@@ -49,14 +50,15 @@ export class MockApiClient implements ApiClient {
 
   async getBlock(id: string): Promise<Block | undefined> {
     await mockDelay();
-    return this.#blocks.find((block) => block.id === id);
+    const block = this.#blocks.find((entry) => entry.id === id);
+    return block ? normalizeBlock(block) : undefined;
   }
 
   async getBlocks(filter?: BlockFilter): Promise<PagedResult<Block>> {
     await mockDelay();
-    const matched = this.#blocks.filter((block) =>
-      matchesFilter(block, filter),
-    );
+    const matched = this.#blocks
+      .filter((block) => matchesFilter(block, filter))
+      .map(normalizeBlock);
     const sorted = sortBlocks(matched, filter?.sortBy);
     return pageItems(sorted, filter?.page, filter?.pageSize);
   }

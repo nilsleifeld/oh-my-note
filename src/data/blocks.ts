@@ -55,5 +55,6 @@ export function createChildBlock(
       imageData: "",
       open: true,
     },
+    comments: [],
   };
 }

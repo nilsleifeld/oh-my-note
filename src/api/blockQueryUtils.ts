@@ -17,6 +17,7 @@ export function normalizeBlock(block: Block): Block {
       imageData: block.properties?.imageData ?? "",
       open: block.properties?.open ?? true,
     },
+    comments: block.comments ?? [],
   };
 }
 

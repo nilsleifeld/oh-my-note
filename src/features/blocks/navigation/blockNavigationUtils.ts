@@ -21,7 +21,7 @@ export function isBlockEditTarget(target: EventTarget | null): boolean {
 }
 
 function isBlockRowVisible(block: Element): boolean {
-  const row = block.querySelector(":scope > .block__row");
+  const row = block.querySelector(":scope > .block__line > .block__row");
   if (!row) return false;
 
   const style = getComputedStyle(row);

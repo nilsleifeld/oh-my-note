@@ -28,6 +28,7 @@ function AppShell() {
     <div className={appViewClassName}>
       <AppHeader />
       <App />
+      <AppFooter />
     </div>
   );
 }
@@ -50,7 +51,6 @@ createRoot(root).render(
                     <AppShell />
                   </FolderProvider>
                 </div>
-                <AppFooter />
               </BlockNavigationProvider>
             </DragProvider>
           </BlockHistoryProvider>

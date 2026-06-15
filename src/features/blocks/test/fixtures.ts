@@ -21,6 +21,7 @@ export function makeBlock(
       open: true,
       ...propOverrides,
     },
+    comments: [],
     ...rest,
   };
 }

@@ -1,4 +1,9 @@
-import type { Block, BlockChange, BlockType } from "../../../types/models";
+import type {
+  Block,
+  BlockChange,
+  BlockComment,
+  BlockType,
+} from "../../../types/models";
 import { cloneBlock } from "../cache/blockCacheState";
 
 export function buildPropertyChange(
@@ -104,6 +109,21 @@ export function buildToggleShortcutChange(
     ...cloneBlock(block),
     type: "toggle" as const,
     properties: { ...block.properties, title, open: true },
+  };
+
+  return { snapshot: [snapshot], updates: [update] };
+}
+
+export function buildHeadingShortcutChange(
+  block: Block,
+  type: Extract<BlockType, "h1" | "h2" | "h3" | "h4" | "h5">,
+  title: string,
+): BlockChange {
+  const snapshot = cloneBlock(block);
+  const update = {
+    ...cloneBlock(block),
+    type,
+    properties: { ...block.properties, title },
   };
 
   return { snapshot: [snapshot], updates: [update] };
@@ -232,4 +252,46 @@ export function buildMoveSnapshot(
     snapshot.push(cloneBlock(targetParent));
   }
   return snapshot;
+}
+
+export function buildAddCommentChange(
+  block: Block,
+  comment: BlockComment,
+): BlockChange {
+  const snapshot = cloneBlock(block);
+  const update = {
+    ...cloneBlock(block),
+    comments: [...block.comments, comment],
+  };
+
+  return { snapshot: [snapshot], updates: [update] };
+}
+
+export function buildUpdateCommentChange(
+  block: Block,
+  commentId: string,
+  text: string,
+): BlockChange {
+  const snapshot = cloneBlock(block);
+  const update = {
+    ...cloneBlock(block),
+    comments: block.comments.map((comment) =>
+      comment.id === commentId ? { ...comment, text } : comment,
+    ),
+  };
+
+  return { snapshot: [snapshot], updates: [update] };
+}
+
+export function buildDeleteCommentChange(
+  block: Block,
+  commentId: string,
+): BlockChange {
+  const snapshot = cloneBlock(block);
+  const update = {
+    ...cloneBlock(block),
+    comments: block.comments.filter((comment) => comment.id !== commentId),
+  };
+
+  return { snapshot: [snapshot], updates: [update] };
 }

@@ -21,6 +21,7 @@ const SENTINEL_BLOCKS = [
       imageData: "",
       open: true,
     },
+    comments: [],
   },
 ];
 
@@ -53,6 +54,11 @@ export type SeedBlock = {
     imageData: string;
     open: boolean;
   };
+  comments?: Array<{
+    id: string;
+    text: string;
+    createdAt: string;
+  }>;
 };
 
 export function todayISO() {
@@ -65,8 +71,18 @@ export function shiftDate(date: string, days: number) {
   return d.toISOString().slice(0, 10);
 }
 
+function normalizeSeedBlock(block: SeedBlock): SeedBlock {
+  return {
+    ...block,
+    comments: block.comments ?? [],
+  };
+}
+
 export async function gotoAppWithBlocks(page: Page, blocks: SeedBlock[]) {
-  await page.addInitScript(forceSeedMockBlocksScript, blocks);
+  await page.addInitScript(
+    forceSeedMockBlocksScript,
+    blocks.map(normalizeSeedBlock),
+  );
 
   await page.goto("/");
   await expect(todaySection(page)).toBeVisible();
@@ -146,17 +162,19 @@ export function blocksInDay(day: Locator, type?: BlockType): Locator {
 }
 
 export function blockInput(block: Locator): Locator {
-  return block.locator("> .block__row .block__input").first();
+  return block.locator("> .block__line > .block__row .block__input").first();
 }
 
 export function blockImageTarget(block: Locator): Locator {
   return block
-    .locator("> .block__row .block__input, > .block__row .block__image")
+    .locator(
+      "> .block__line > .block__row .block__input, > .block__line > .block__row .block__image",
+    )
     .first();
 }
 
 export function blockImage(block: Locator): Locator {
-  return block.locator("> .block__row .block__image-img");
+  return block.locator("> .block__line > .block__row .block__image-img");
 }
 
 /** 1×1 red PNG as data URL for paste tests. */
@@ -204,7 +222,41 @@ export async function getStoredBlock(page: Page, blockId: string) {
 }
 
 export async function hoverBlockRow(block: Locator) {
-  await block.locator("> .block__row").hover();
+  await block.locator("> .block__line > .block__row").hover();
+}
+
+export function blockCommentsButton(block: Locator): Locator {
+  return block.locator(".block__comments-trigger");
+}
+
+export function blockCommentsPopover(block: Locator): Locator {
+  return block.locator(".block__comments-popover");
+}
+
+export function blockCommentsThread(block: Locator): Locator {
+  return block.locator(".block__comments-thread");
+}
+
+export function blockCommentsReply(block: Locator): Locator {
+  return blockCommentsThread(block).locator(".block__comments-reply");
+}
+
+export function commentsPanel(page: Page): Locator {
+  return page.locator(".block__comments-thread");
+}
+
+export async function openBlockComments(block: Locator) {
+  await hoverBlockRow(block);
+  await blockCommentsButton(block).click();
+}
+
+export async function expectCommentsOpen(block: Locator) {
+  await expect(blockCommentsPopover(block)).toHaveClass(/popover--open/);
+  await expect(blockCommentsThread(block)).toBeVisible();
+}
+
+export async function expectCommentsClosed(block: Locator) {
+  await expect(blockCommentsPopover(block)).not.toHaveClass(/popover--open/);
 }
 
 export async function openTypeMenu(block: Locator) {
@@ -426,11 +478,12 @@ export async function selectViewMode(page: Page, mode: ViewMode) {
 }
 
 export async function expectBlockRowVisible(block: Locator, visible: boolean) {
-  const row = block.locator("> .block__row");
+  const line = block.locator("> .block__line");
   if (visible) {
-    await expect(row).toBeVisible();
+    await expect(line).toBeVisible();
+    await expect(line.locator("> .block__row")).toBeVisible();
   } else {
-    await expect(row).toBeHidden();
+    await expect(line).toBeHidden();
   }
 }
 

@@ -27,6 +27,7 @@ function seedBlock(def: BlockSeed): Block {
       imageData: "",
       open: true,
     },
+    comments: [],
   };
 }
 

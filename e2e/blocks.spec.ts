@@ -37,6 +37,14 @@ import {
   navSelectedBlock,
   pressVimNavKey,
   pressVimRedoKey,
+  hoverBlockRow,
+  openBlockComments,
+  blockCommentsThread,
+  blockCommentsButton,
+  blockCommentsReply,
+  blockCommentsPopover,
+  expectCommentsOpen,
+  expectCommentsClosed,
 } from "./fixtures/app";
 
 test.describe("Block-Erstellung", () => {
@@ -333,6 +341,59 @@ test.describe("Block-Typ wechseln", () => {
     ).toHaveClass(/block__toggle--open/);
   });
 
+  test('"# "–"##### " wandeln Textblock in Heading um', async ({ page }) => {
+    const shortcuts = [
+      ["# ", "h1"],
+      ["## ", "h2"],
+      ["### ", "h3"],
+      ["#### ", "h4"],
+      ["##### ", "h5"],
+    ] as const;
+
+    for (const [shortcut, type] of shortcuts) {
+      await gotoApp(page);
+      await addBlock(page, "text");
+
+      const block = blocks(page, "text").first();
+      const input = blockInput(block);
+      await input.click();
+      await input.pressSequentially(shortcut, { delay: 50 });
+
+      await expect(blocks(page, "text")).toHaveCount(0);
+      await expect(blocks(page, type)).toHaveCount(1);
+      await expect(blockInput(blocks(page, type).first())).toHaveValue("");
+    }
+  });
+
+  test('"## " mit Titel wandelt Textblock in Heading 2 um', async ({
+    page,
+  }) => {
+    const block = blocks(page, "text").first();
+    const input = blockInput(block);
+    await input.click();
+    await input.pressSequentially("## Überschrift", { delay: 50 });
+
+    await expect(blocks(page, "text")).toHaveCount(0);
+    await expect(blocks(page, "h2")).toHaveCount(1);
+    await expect(blockInput(blocks(page, "h2").first())).toHaveValue(
+      "Überschrift",
+    );
+  });
+
+  test("Heading-Shortcut behält Fokus und erlaubt weiteres Tippen", async ({
+    page,
+  }) => {
+    const block = blocks(page, "text").first();
+    const input = blockInput(block);
+    await input.click();
+    await input.pressSequentially("# ", { delay: 50 });
+
+    const headingInput = blockInput(blocks(page, "h1").first());
+    await expect(headingInput).toBeFocused();
+    await page.keyboard.type("Kapitel");
+    await expect(headingInput).toHaveValue("Kapitel");
+  });
+
   test("Shortcut behält Fokus und erlaubt weiteres Tippen", async ({
     page,
   }) => {
@@ -350,7 +411,15 @@ test.describe("Block-Typ wechseln", () => {
   test.describe("Shortcuts aus jedem Block-Typ", () => {
     async function typeShortcut(
       block: ReturnType<typeof blocks>,
-      shortcut: "- " | "[] " | "> ",
+      shortcut:
+        | "- "
+        | "[] "
+        | "> "
+        | "# "
+        | "## "
+        | "### "
+        | "#### "
+        | "##### ",
     ) {
       const input = blockInput(block);
       await input.click();
@@ -456,6 +525,42 @@ test.describe("Block-Typ wechseln", () => {
       await expect(blockInput(blocks(page, "toggle").first())).toHaveValue("");
     });
 
+    test('"# " wandelt Bullet in Heading 1 um', async ({ page }) => {
+      await addBlock(page, "bullet");
+      await typeShortcut(blocks(page, "bullet").first(), "# ");
+
+      await expect(blocks(page, "bullet")).toHaveCount(0);
+      await expect(blocks(page, "h1")).toHaveCount(1);
+      await expect(blockInput(blocks(page, "h1").first())).toHaveValue("");
+    });
+
+    test('"### " wandelt To-do in Heading 3 um', async ({ page }) => {
+      await addBlock(page, "todo");
+      await typeShortcut(blocks(page, "todo").first(), "### ");
+
+      await expect(blocks(page, "todo")).toHaveCount(0);
+      await expect(blocks(page, "h3")).toHaveCount(1);
+      await expect(blockInput(blocks(page, "h3").first())).toHaveValue("");
+    });
+
+    test('"## " wandelt Heading 1 in Heading 2 um', async ({ page }) => {
+      await addBlock(page, "h1");
+      await typeShortcut(blocks(page, "h1").first(), "## ");
+
+      await expect(blocks(page, "h1")).toHaveCount(0);
+      await expect(blocks(page, "h2")).toHaveCount(1);
+      await expect(blockInput(blocks(page, "h2").first())).toHaveValue("");
+    });
+
+    test('"##### " wandelt Code in Heading 5 um', async ({ page }) => {
+      await addBlock(page, "code");
+      await typeShortcut(blocks(page, "code").first(), "##### ");
+
+      await expect(blocks(page, "code")).toHaveCount(0);
+      await expect(blocks(page, "h5")).toHaveCount(1);
+      await expect(blockInput(blocks(page, "h5").first())).toHaveValue("");
+    });
+
     test('"- " behält vorhandenen Inhalt beim Umwandeln', async ({ page }) => {
       await addBlock(page, "todo");
       const block = blocks(page, "todo").first();
@@ -504,6 +609,25 @@ test.describe("Block-Typ wechseln", () => {
       await expect(blocks(page, "toggle")).toHaveCount(1);
       await expect(blockInput(blocks(page, "toggle").first())).toHaveValue(
         "Aufgabe",
+      );
+    });
+
+    test('"#### " behält vorhandenen Inhalt beim Umwandeln', async ({
+      page,
+    }) => {
+      await addBlock(page, "bullet");
+      const block = blocks(page, "bullet").first();
+      await fillBlock(block, "Abschnitt");
+
+      const input = blockInput(block);
+      await input.click();
+      await input.press("Home");
+      await input.pressSequentially("#### ", { delay: 50 });
+
+      await expect(blocks(page, "bullet")).toHaveCount(0);
+      await expect(blocks(page, "h4")).toHaveCount(1);
+      await expect(blockInput(blocks(page, "h4").first())).toHaveValue(
+        "Abschnitt",
       );
     });
   });
@@ -1523,7 +1647,7 @@ test.describe("Vim-Block-Navigation", () => {
     await pressVimNavKey(page, "j");
     await expect(blockA).toHaveClass(/block--nav-selected/);
 
-    await blockB.locator("> .block__row").click();
+    await blockB.locator("> .block__line > .block__row").click();
     await expect(blockInput(blockB)).toBeFocused();
     await expect(blockA).not.toHaveClass(/block--nav-selected/);
     await expect(blockB).not.toHaveClass(/block--nav-selected/);
@@ -1988,5 +2112,90 @@ test.describe("Vim-Block-Navigation", () => {
         ).first(),
       ),
     ).toHaveValue("Kind");
+  });
+});
+
+test.describe("Block-Kommentare", () => {
+  test.beforeEach(async ({ page }) => {
+    await gotoApp(page);
+  });
+
+  test("fokussiert das Eingabefeld beim Öffnen", async ({ page }) => {
+    await addBlock(page, "text");
+    const block = blocks(page).first();
+    await fillBlock(block, "Meeting notes");
+
+    await openBlockComments(block);
+    await expectCommentsOpen(block);
+    await expect(blockCommentsReply(block)).toBeFocused();
+  });
+
+  test("zeigt ohne Kommentare nur das Eingabefeld", async ({ page }) => {
+    await addBlock(page, "text");
+    const block = blocks(page).first();
+    await fillBlock(block, "Empty thread");
+
+    await openBlockComments(block);
+    const thread = blockCommentsThread(block);
+    await expect(thread.locator(".block__comments-list")).toHaveCount(0);
+    await expect(blockCommentsReply(block)).toBeVisible();
+    await expect(blockCommentsPopover(block)).toHaveClass(/popover--open/);
+  });
+
+  test("schließt den Popover beim erneuten Klick", async ({ page }) => {
+    await addBlock(page, "text");
+    const block = blocks(page).first();
+    await fillBlock(block, "Toggle close");
+
+    await openBlockComments(block);
+    await expectCommentsOpen(block);
+
+    await blockCommentsButton(block).click();
+    await expectCommentsClosed(block);
+  });
+
+  test("öffnet Thread, fügt Kommentare hinzu und bearbeitet sie", async ({
+    page,
+  }) => {
+    await addBlock(page, "text");
+    const block = blocks(page).first();
+    await fillBlock(block, "Meeting notes");
+
+    await hoverBlockRow(block);
+    await expect(blockCommentsButton(block)).toBeVisible();
+
+    await openBlockComments(block);
+    const thread = blockCommentsThread(block);
+    await expectCommentsOpen(block);
+    await expect(thread.locator(".block__comments-list")).toHaveCount(0);
+
+    const reply = blockCommentsReply(block);
+    await reply.fill("Follow up next week");
+    await thread.getByRole("button", { name: "Add comment" }).click();
+
+    await expect(block).toHaveClass(/block--has-comments/);
+    await expect(block.locator(".block__comments-count")).toHaveText("1");
+    await expect(thread.locator(".block__comments-list")).toBeVisible();
+    await expect(thread).toContainText("Follow up next week");
+    await expect(thread.locator(".block__comments-item-date")).toBeVisible();
+
+    await thread.getByRole("button", { name: "Follow up next week" }).click();
+    const editArea = thread.locator(".block__comments-item-input");
+    await editArea.fill("Follow up on Monday");
+    await editArea.press("Enter");
+    await expect(thread).toContainText("Follow up on Monday");
+
+    await reply.fill("Second comment");
+    await thread.getByRole("button", { name: "Add comment" }).click();
+    await expect(block.locator(".block__comments-count")).toHaveText("2");
+
+    const firstItem = thread.locator(".block__comments-item").first();
+    await firstItem.hover();
+    await firstItem.getByRole("button", { name: "Delete comment" }).click();
+    await expect(block.locator(".block__comments-count")).toHaveText("1");
+
+    await blockCommentsButton(block).click();
+    await expectCommentsClosed(block);
+    await expect(block.locator(".block__comments-count")).toHaveText("1");
   });
 });
