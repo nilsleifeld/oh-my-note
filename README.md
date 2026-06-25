@@ -16,7 +16,7 @@ Two ideas shaped the design:
 
 ### Block-based content (Notion)
 
-Everything in oh-my-note is a **block** — text, headings, todos, code, images. Each block has an ID, a type, properties, and a list of child block IDs. Blocks can be nested and reordered.
+Everything in oh-my-note is a **block** — text, headings, todos, code, images. Each block has an ID, a type, properties, and a parent reference. Blocks can be nested and reordered.
 
 This follows the same core idea as [Notion's block model](https://www.notion.com/blog/data-model-behind-notion): information as small, composable units rather than monolithic documents. Changing a block's type doesn't throw away its content — properties are stored independently from rendering.
 
@@ -44,7 +44,7 @@ Supported block types:
 | `code`    | Syntax-highlighted code (multiple languages) |
 | `image`   | Inline image (paste or drop)                 |
 
-Blocks form a tree via `parentId` and `content` arrays. You can indent blocks, drag and drop to reorder, change types, and undo/redo edits.
+Blocks form a tree via `parentId` and sibling order via `sortKey`. You can indent blocks, drag and drop to reorder, change types, and undo/redo edits.
 
 ### View modes
 
@@ -52,13 +52,11 @@ Switch between a **notes** view (all blocks per day) and a **todos** view that a
 
 ### Storage
 
-In folder mode, the app uses the [File System Access API](https://developer.mozilla.org/en-US/docs/Web/API/File_System_Access_API) to read and write a local directory you choose. Each day is one JSON file:
+In folder mode, the app uses the [File System Access API](https://developer.mozilla.org/en-US/docs/Web/API/File_System_Access_API) to read and write a local directory you choose. All blocks for every day live in a single file:
 
 ```
 notes/
-  2026-06-14.json
-  2026-06-13.json
-  ...
+  blocks.json
 ```
 
 File format:
@@ -66,10 +64,11 @@ File format:
 ```json
 {
   "version": 1,
-  "day": "2026-06-14",
   "blocks": [ ... ]
 }
 ```
+
+Each block includes a `day` field (`YYYY-MM-DD`) that ties it to a day section in the feed.
 
 Your data stays on disk. The browser remembers the folder handle between sessions.
 
