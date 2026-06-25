@@ -1,8 +1,8 @@
 import type { QueryClient } from "@tanstack/react-query";
 import { createChildBlock, isHeadingBlockType } from "../../../data/blocks";
 import type { Block, BlockChange, BlockType } from "../../../types/models";
-import { findParentInContext, rootBlockIds } from "../../../utils/blockTree";
-import { createdAtAfter } from "../../../utils/date";
+import { childrenOf, findParentInContext } from "../../../utils/blockTree";
+import { sortKeyBetween } from "../../../utils/sortKey";
 import { queryKeys } from "../../../lib/query/queryKeys";
 import {
   buildCreateChildChange,
@@ -34,50 +34,45 @@ async function insertBlockRelative(
 ): Promise<InsertResult | null> {
   const block = await fetchBlock(queryClient, blockId);
   const type = blockTypeForSiblingInsert(block.type);
-  const roots =
+  const blocks =
     queryClient.getQueryData<Block[]>(queryKeys.day(block.day)) ?? [];
-  const rootIds = rootBlockIds(roots);
-  const getBlockFn = (id: string) => fetchBlock(queryClient, id);
-  const parentInfo = await findParentInContext(blockId, rootIds, getBlockFn);
+  const parentInfo = findParentInContext(blockId, blocks, block.day);
   if (!parentInfo) return null;
 
   const parent = parentInfo.parent;
-  const parentBlock = parent ? await fetchBlock(queryClient, parent.id) : null;
+  const parentBlock = parent;
   const child = createChildBlock(type, {
     parentId: parent?.id ?? null,
     day: parentBlock?.day ?? block.day,
     createdAt: new Date().toISOString(),
+    sortKey: sortKeyBetween(null, null),
   });
 
   let change: BlockChange;
 
   if (parent === null) {
+    const siblings = childrenOf(blocks, null, block.day);
     if (position === "below") {
-      const nextRootId = rootIds[parentInfo.index + 1];
-      const nextRoot = nextRootId
-        ? await fetchBlock(queryClient, nextRootId)
-        : undefined;
-      child.createdAt = createdAtAfter(
-        block.day,
-        block.createdAt,
-        nextRoot?.createdAt,
-      );
+      const afterIndex = siblings.findIndex((entry) => entry.id === blockId);
+      const nextRoot = siblings[afterIndex + 1];
+      child.sortKey = sortKeyBetween(block.sortKey, nextRoot?.sortKey ?? null);
     } else {
-      const prevRootId = rootIds[parentInfo.index - 1];
-      const prevRoot = prevRootId
-        ? await fetchBlock(queryClient, prevRootId)
-        : undefined;
-      child.createdAt = createdAtAfter(
-        block.day,
-        prevRoot?.createdAt,
-        block.createdAt,
-      );
+      const afterIndex = siblings.findIndex((entry) => entry.id === blockId);
+      const prevRoot = siblings[afterIndex - 1];
+      child.sortKey = sortKeyBetween(prevRoot?.sortKey ?? null, block.sortKey);
     }
     change = buildCreateRootChange(child);
   } else {
+    const siblings = childrenOf(blocks, parent.id);
     const index =
       position === "below" ? parentInfo.index + 1 : parentInfo.index;
-    change = buildCreateChildChange(parent, child, index);
+    const prev = siblings[index - 1];
+    const next = siblings[index];
+    child.sortKey = sortKeyBetween(
+      prev?.sortKey ?? null,
+      next?.sortKey ?? null,
+    );
+    change = buildCreateChildChange(child);
   }
 
   applyChangeToCache(queryClient, change);

@@ -5,11 +5,13 @@ import type {
   BlockSortBy,
   PagedResult,
 } from "../types/models";
+import { compareSortKeys, sortKeyBetween } from "../utils/sortKey";
 
 export function normalizeBlock(block: Block): Block {
   return {
     ...block,
     day: block.day ?? block.createdAt.slice(0, 10),
+    sortKey: block.sortKey ?? sortKeyBetween(null, null),
     properties: {
       title: block.properties?.title ?? "",
       checked: block.properties?.checked ?? false,
@@ -37,13 +39,13 @@ export function matchesFilter(block: Block, filter?: BlockFilter): boolean {
 }
 
 export function sortBlocks(blocks: Block[], sortBy?: BlockSortBy): Block[] {
-  const field = sortBy?.field ?? "createdAt";
+  const field = sortBy?.field ?? "sortKey";
   const order = sortBy?.order ?? "asc";
 
-  if (field !== "createdAt") return blocks;
+  if (field !== "sortKey") return blocks;
 
   return [...blocks].sort((a, b) => {
-    const cmp = a.createdAt.localeCompare(b.createdAt);
+    const cmp = compareSortKeys(a.sortKey, b.sortKey);
     return order === "desc" ? -cmp : cmp;
   });
 }
@@ -93,10 +95,8 @@ export function collectSubtreeIds(
   const walk = (blockId: string): void => {
     if (ids.has(blockId)) return;
     ids.add(blockId);
-    const block = blocks.find((entry) => entry.id === blockId);
-    if (!block) return;
-    for (const childId of block.content) {
-      walk(childId);
+    for (const child of blocks.filter((entry) => entry.parentId === blockId)) {
+      walk(child.id);
     }
   };
 

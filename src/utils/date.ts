@@ -55,21 +55,3 @@ export function formatCommentDate(iso: string): string {
     minute: "2-digit",
   });
 }
-
-export function createdAtAfter(
-  date: string,
-  after?: string,
-  before?: string,
-): string {
-  if (after && before) {
-    const mid = (new Date(after).getTime() + new Date(before).getTime()) / 2;
-    return new Date(mid).toISOString();
-  }
-  if (after) {
-    return new Date(new Date(after).getTime() + 1).toISOString();
-  }
-  if (before) {
-    return new Date(new Date(before).getTime() - 1).toISOString();
-  }
-  return `${date}T12:00:00.000Z`;
-}

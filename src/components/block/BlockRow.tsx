@@ -1,7 +1,7 @@
 import type { BlockRowProps } from "../../types/ui";
 import { useBlockNavigation } from "../../features/blocks/navigation/BlockNavigationProvider";
 import { isHeadingBlockType } from "../../data/blocks";
-import { uniqueIds } from "../../utils/list";
+import { childBlockIds } from "../../utils/blockTree";
 import { useBlockQuery } from "../../features/blocks/queries/useBlockQuery";
 import { useDeleteBlock } from "../../features/blocks/mutations/useDeleteBlock";
 import { BlockHandle, BlockTypeSelect } from "./BlockHandle";
@@ -18,10 +18,9 @@ import { ToggleBlock } from "./ToggleBlock";
 export function BlockRow({
   blockId,
   date,
-  rootKey,
+  dayBlocks,
   rootIds,
   dragState,
-  pendingContent,
   onDragStart,
   onDragOver,
   onDrop,
@@ -73,7 +72,7 @@ export function BlockRow({
     onRequestFocus,
   };
 
-  const childIds = uniqueIds(pendingContent?.(block.id) ?? block.content);
+  const childIds = childBlockIds(dayBlocks, block.id);
   const hasChildren = childIds.length > 0;
   const showChildren =
     hasChildren && (block.type !== "toggle" || block.properties.open);
@@ -131,10 +130,9 @@ export function BlockRow({
               key={childId}
               blockId={childId}
               date={date}
-              rootKey={rootKey}
+              dayBlocks={dayBlocks}
               rootIds={rootIds}
               dragState={dragState}
-              pendingContent={pendingContent}
               onDragStart={onDragStart}
               onDragOver={onDragOver}
               onDrop={onDrop}

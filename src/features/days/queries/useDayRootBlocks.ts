@@ -4,7 +4,7 @@ import type { BlockSortBy } from "../../../types/models";
 import { queryKeys } from "../../../lib/query/queryKeys";
 import { seedBlockQueries } from "../../blocks/cache/blockCache";
 
-const defaultSortBy: BlockSortBy = { field: "createdAt", order: "asc" };
+const defaultSortBy: BlockSortBy = { field: "sortKey", order: "asc" };
 
 type UseDayRootBlocksOptions = {
   enabled?: boolean;
@@ -13,6 +13,7 @@ type UseDayRootBlocksOptions = {
   sortBy?: BlockSortBy;
 };
 
+/** Loads all blocks for a day (roots and descendants). */
 export function useDayRootBlocks(
   date: string,
   options: UseDayRootBlocksOptions = {},
@@ -37,7 +38,6 @@ export function useDayRootBlocks(
     enabled,
     queryFn: async () => {
       const result = await client.getBlocks({
-        parentId: null,
         day: date,
         page,
         pageSize,

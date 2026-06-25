@@ -1,350 +1,324 @@
 import type { Block, ParentInfo } from "../types/models";
-import { createdAtAfter } from "./date";
-import { insertAtIndex, moveInList, uniqueIds } from "./list";
+import { sortKeyBetween } from "./sortKey";
+import { moveInList, uniqueIds } from "./list";
 
-export async function findParent(
-  root: Block,
-  blockId: string,
-  getBlock: (id: string) => Promise<Block | undefined>,
-): Promise<{ parent: Block; index: number } | null> {
-  const index = root.content.indexOf(blockId);
-  if (index !== -1) return { parent: root, index };
-
-  for (const childId of root.content) {
-    const child = await getBlock(childId);
-    if (!child) continue;
-    const found = await findParent(child, blockId, getBlock);
-    if (found) return found;
-  }
-
-  return null;
+export function sortBlocksBySortKey(blocks: Block[]): Block[] {
+  return [...blocks].sort((a, b) => a.sortKey.localeCompare(b.sortKey));
 }
 
-export async function findParentInContext(
-  blockId: string,
-  rootIds: string[],
-  getBlock: (id: string) => Promise<Block | undefined>,
-): Promise<ParentInfo | null> {
-  const rootIndex = rootIds.indexOf(blockId);
-  if (rootIndex !== -1) return { parent: null, index: rootIndex };
-
-  for (const rootId of rootIds) {
-    const root = await getBlock(rootId);
-    if (!root) continue;
-    const found = await findParent(root, blockId, getBlock);
-    if (found) return found;
-  }
-
-  return null;
+export function childrenOf(
+  blocks: Block[],
+  parentId: string | null,
+  day?: string,
+): Block[] {
+  return sortBlocksBySortKey(
+    blocks.filter((block) => {
+      if (block.parentId !== parentId) return false;
+      if (parentId === null && day !== undefined) {
+        return block.day === day;
+      }
+      return true;
+    }),
+  );
 }
 
-export async function isDescendant(
+export function childBlockIds(
+  blocks: Block[],
+  parentId: string | null,
+  day?: string,
+): string[] {
+  return childrenOf(blocks, parentId, day).map((block) => block.id);
+}
+
+export function sortRootBlocks(blocks: Block[], day: string): Block[] {
+  return childrenOf(blocks, null, day);
+}
+
+export function rootBlockIds(blocks: Block[], day: string): string[] {
+  return uniqueIds(sortRootBlocks(blocks, day).map((block) => block.id));
+}
+
+export function findParentInfo(
+  blockId: string,
+  blocks: Block[],
+  day: string,
+): ParentInfo | null {
+  const block = blocks.find((entry) => entry.id === blockId);
+  if (!block) return null;
+
+  if (block.parentId === null) {
+    const roots = childrenOf(blocks, null, day);
+    const index = roots.findIndex((entry) => entry.id === blockId);
+    if (index === -1) return null;
+    return { parent: null, index };
+  }
+
+  const parent = blocks.find((entry) => entry.id === block.parentId);
+  if (!parent) return null;
+
+  const siblings = childrenOf(blocks, parent.id);
+  const index = siblings.findIndex((entry) => entry.id === blockId);
+  if (index === -1) return null;
+
+  return { parent, index };
+}
+
+export function findParentInContext(
+  blockId: string,
+  blocks: Block[],
+  day: string,
+): ParentInfo | null {
+  return findParentInfo(blockId, blocks, day);
+}
+
+export function isDescendant(
   ancestorId: string,
   blockId: string,
-  getBlock: (id: string) => Promise<Block | undefined>,
-): Promise<boolean> {
-  const block = await getBlock(ancestorId);
-  if (!block) return false;
-
-  for (const childId of block.content) {
-    if (childId === blockId) return true;
-    if (await isDescendant(childId, blockId, getBlock)) return true;
+  blocks: Block[],
+): boolean {
+  let current = blocks.find((entry) => entry.id === blockId);
+  while (current?.parentId) {
+    if (current.parentId === ancestorId) return true;
+    current = blocks.find((entry) => entry.id === current!.parentId);
   }
-
   return false;
 }
 
-export async function indentBlock(
-  blockId: string,
-  rootIds: string[],
-  getBlock: (id: string) => Promise<Block | undefined>,
-): Promise<Block[] | null> {
-  const parentInfo = await findParentInContext(blockId, rootIds, getBlock);
-  if (!parentInfo || parentInfo.index === 0) return null;
-
-  if (parentInfo.parent === null) {
-    const prevId = rootIds[parentInfo.index - 1];
-    const prev = await getBlock(prevId);
-    const block = await getBlock(blockId);
-    if (!prev || !block) return null;
-
-    return [
-      { ...prev, content: uniqueIds([...prev.content, blockId]) },
-      { ...block, parentId: prevId },
-    ];
+function sortKeyForReorderedIds(
+  blocks: Block[],
+  orderedIds: string[],
+  draggedId: string,
+): string {
+  const index = orderedIds.indexOf(draggedId);
+  if (index === -1) {
+    throw new Error(`sortKeyForReorderedIds: missing ${draggedId}`);
   }
 
-  const { parent, index } = parentInfo;
-  const prevId = parent.content[index - 1];
-  const prev = await getBlock(prevId);
-  if (!prev) return null;
+  const prev =
+    index > 0
+      ? blocks.find((block) => block.id === orderedIds[index - 1])
+      : undefined;
+  const next =
+    index < orderedIds.length - 1
+      ? blocks.find((block) => block.id === orderedIds[index + 1])
+      : undefined;
 
-  const parentContent = [...parent.content];
-  parentContent.splice(index, 1);
-
-  return [
-    { ...prev, content: uniqueIds([...prev.content, blockId]) },
-    { ...parent, content: parentContent },
-  ];
+  return sortKeyBetween(prev?.sortKey ?? null, next?.sortKey ?? null);
 }
 
-export async function outdentBlock(
-  blockId: string,
-  rootIds: string[],
-  date: string,
-  getBlock: (id: string) => Promise<Block | undefined>,
-): Promise<Block[] | null> {
-  const parentInfo = await findParentInContext(blockId, rootIds, getBlock);
-  if (!parentInfo || parentInfo.parent === null) return null;
+function sortKeyAfterMove(
+  blocks: Block[],
+  parentId: string | null,
+  day: string,
+  draggedId: string,
+  targetId: string,
+): string {
+  const siblings = childrenOf(blocks, parentId, day);
+  const siblingIds = siblings.map((block) => block.id);
+  const reordered = moveInList(siblingIds, draggedId, targetId);
+  return sortKeyForReorderedIds(blocks, reordered, draggedId);
+}
 
-  const { parent, index } = parentInfo;
-  const block = await getBlock(blockId);
+function sortKeyBeforeTargetAmongSiblings(
+  blocks: Block[],
+  parentId: string | null,
+  day: string,
+  targetId: string,
+  draggedId: string,
+): string {
+  const siblingIds = childrenOf(blocks, parentId, day)
+    .map((block) => block.id)
+    .filter((id) => id !== draggedId);
+  const targetIndex = siblingIds.indexOf(targetId);
+  const orderedIds = [...siblingIds];
+  orderedIds.splice(targetIndex, 0, draggedId);
+  return sortKeyForReorderedIds(blocks, orderedIds, draggedId);
+}
+
+export function indentBlock(
+  blockId: string,
+  blocks: Block[],
+  day: string,
+): Block[] | null {
+  const parentInfo = findParentInfo(blockId, blocks, day);
+  if (!parentInfo || parentInfo.index === 0) return null;
+
+  const block = blocks.find((entry) => entry.id === blockId);
   if (!block) return null;
 
-  const parentContent = [...parent.content];
-  parentContent.splice(index, 1);
+  const previousSibling =
+    parentInfo.parent === null
+      ? childrenOf(blocks, null, day)[parentInfo.index - 1]
+      : childrenOf(blocks, parentInfo.parent.id)[parentInfo.index - 1];
+
+  const prevChildren = childrenOf(blocks, previousSibling.id);
+  const lastChild = prevChildren.at(-1);
+  const newSortKey = sortKeyBetween(lastChild?.sortKey ?? null, null);
+
+  return [{ ...block, parentId: previousSibling.id, sortKey: newSortKey }];
+}
+
+export function outdentBlock(
+  blockId: string,
+  blocks: Block[],
+  day: string,
+): Block[] | null {
+  const parentInfo = findParentInfo(blockId, blocks, day);
+  if (!parentInfo || parentInfo.parent === null) return null;
+
+  const block = blocks.find((entry) => entry.id === blockId);
+  const parent = parentInfo.parent;
+  if (!block) return null;
 
   if (parent.parentId === null) {
-    const parentRootIndex = rootIds.indexOf(parent.id);
-    const nextRootId = rootIds[parentRootIndex + 1];
-    const nextRoot = nextRootId ? await getBlock(nextRootId) : undefined;
-    const createdAt = createdAtAfter(
-      date,
-      parent.createdAt,
-      nextRoot?.createdAt,
+    const roots = childrenOf(blocks, null, day);
+    const parentIndex = roots.findIndex((entry) => entry.id === parent.id);
+    const nextRoot = roots[parentIndex + 1];
+    const newSortKey = sortKeyBetween(
+      parent.sortKey,
+      nextRoot?.sortKey ?? null,
     );
-
-    return [
-      { ...block, parentId: null, createdAt },
-      { ...parent, content: parentContent },
-    ];
+    return [{ ...block, parentId: null, sortKey: newSortKey }];
   }
 
-  const grandparentInfo = await findParentInContext(
-    parent.id,
-    rootIds,
-    getBlock,
+  const cousins = childrenOf(blocks, parent.parentId);
+  const parentIndex = cousins.findIndex((entry) => entry.id === parent.id);
+  const nextSibling = cousins[parentIndex + 1];
+  const newSortKey = sortKeyBetween(
+    parent.sortKey,
+    nextSibling?.sortKey ?? null,
   );
-  if (!grandparentInfo || grandparentInfo.parent === null) return null;
 
-  const grandparentContent = [...grandparentInfo.parent.content];
-  grandparentContent.splice(grandparentInfo.index + 1, 0, blockId);
-
-  return [
-    { ...grandparentInfo.parent, content: grandparentContent },
-    { ...parent, content: parentContent },
-  ];
+  return [{ ...block, parentId: parent.parentId, sortKey: newSortKey }];
 }
 
 type MoveBlockOptions = {
   targetDate?: string;
-  sourceRootIds?: string[];
-  targetRootIds?: string[];
+  sourceBlocks?: Block[];
+  targetBlocks?: Block[];
 };
 
-async function mergeSubtreeDay(
+function mergeSubtreeDay(
   updates: Block[],
   draggedId: string,
   day: string,
-  getBlock: (id: string) => Promise<Block | undefined>,
-): Promise<Block[]> {
+  blocks: Block[],
+): Block[] {
   const byId = new Map(updates.map((block) => [block.id, block]));
 
-  async function walk(blockId: string): Promise<void> {
-    const block = await getBlock(blockId);
+  const walk = (blockId: string): void => {
+    const block = blocks.find((entry) => entry.id === blockId);
     if (!block) return;
 
     const existing = byId.get(blockId);
     byId.set(blockId, existing ? { ...existing, day } : { ...block, day });
 
-    for (const childId of block.content) {
-      await walk(childId);
+    for (const child of blocks.filter((entry) => entry.parentId === blockId)) {
+      walk(child.id);
     }
-  }
+  };
 
-  await walk(draggedId);
+  walk(draggedId);
   return [...byId.values()];
 }
 
-export async function moveBlockInTree(
+export function moveBlockInTree(
   draggedId: string,
   targetId: string,
-  rootIds: string[],
-  date: string,
-  getBlock: (id: string) => Promise<Block | undefined>,
+  blocks: Block[],
+  day: string,
   options: MoveBlockOptions = {},
-): Promise<Block[] | null> {
-  const targetDate = options.targetDate ?? date;
-  const sourceRootIds = options.sourceRootIds ?? rootIds;
-  const targetRootIds = options.targetRootIds ?? rootIds;
-  const crossDay = date !== targetDate;
+): Block[] | null {
+  const targetDate = options.targetDate ?? day;
+  const sourceBlocks = options.sourceBlocks ?? blocks;
+  const targetBlocks = options.targetBlocks ?? blocks;
+  const crossDay = day !== targetDate;
 
   if (draggedId === targetId) return null;
-  if (await isDescendant(draggedId, targetId, getBlock)) return null;
+  if (isDescendant(draggedId, targetId, sourceBlocks)) return null;
 
-  const draggedParent = await findParentInContext(
-    draggedId,
-    sourceRootIds,
-    getBlock,
-  );
-  const targetParent = await findParentInContext(
-    targetId,
-    targetRootIds,
-    getBlock,
-  );
+  const dragged = sourceBlocks.find((entry) => entry.id === draggedId);
+  const target = targetBlocks.find((entry) => entry.id === targetId);
+  if (!dragged || !target) return null;
+
+  const draggedParent = findParentInfo(draggedId, sourceBlocks, day);
+  const targetParent = findParentInfo(targetId, targetBlocks, targetDate);
   if (!draggedParent || !targetParent) return null;
 
-  async function finish(updates: Block[] | null): Promise<Block[] | null> {
+  function finish(updates: Block[] | null): Block[] | null {
     if (!updates) return null;
     if (!crossDay) return updates;
-    return mergeSubtreeDay(updates, draggedId, targetDate, getBlock);
+    return mergeSubtreeDay(updates, draggedId, targetDate, sourceBlocks);
   }
 
-  if (draggedParent.parent === null && targetParent.parent === null) {
-    if (!crossDay) {
-      const reordered = moveInList(rootIds, draggedId, targetId);
-      if (reordered === rootIds) return null;
+  const isDroppedOnParent =
+    draggedParent.parent !== null && targetId === draggedParent.parent.id;
 
-      const dragged = await getBlock(draggedId);
-      if (!dragged) return null;
-
-      const draggedIndex = reordered.indexOf(draggedId);
-      const prevId = reordered[draggedIndex - 1];
-      const nextId = reordered[draggedIndex + 1];
-      const prev = prevId ? await getBlock(prevId) : undefined;
-      const next = nextId ? await getBlock(nextId) : undefined;
-
-      const createdAt = createdAtAfter(
-        targetDate,
-        prev?.createdAt,
-        next?.createdAt,
-      );
-
-      return finish([{ ...dragged, parentId: null, createdAt }]);
-    }
-
-    const dragged = await getBlock(draggedId);
-    if (!dragged) return null;
-
-    const targetIndex = targetRootIds.indexOf(targetId);
-    const prevId = targetRootIds[targetIndex - 1];
-    const nextId = targetRootIds[targetIndex];
-    const prev = prevId ? await getBlock(prevId) : undefined;
-    const next = nextId ? await getBlock(nextId) : undefined;
-    const createdAt = createdAtAfter(
-      targetDate,
-      prev?.createdAt,
-      next?.createdAt,
-    );
-
-    return finish([{ ...dragged, parentId: null, day: targetDate, createdAt }]);
-  }
-
-  if (
-    draggedParent.parent !== null &&
-    targetParent.parent !== null &&
-    draggedParent.parent.id === targetParent.parent.id
-  ) {
-    const content = moveInList(
-      draggedParent.parent.content,
-      draggedId,
-      targetId,
-    );
-    if (content === draggedParent.parent.content) return null;
-    return finish([{ ...draggedParent.parent, content }]);
-  }
-
-  if (draggedParent.parent === null) {
-    const dragged = await getBlock(draggedId);
-    if (!dragged) return null;
-
-    if (targetParent.parent === null) {
-      const targetIndex = targetRootIds.indexOf(targetId);
-      const prevId = targetRootIds[targetIndex - 1];
-      const nextId = targetRootIds[targetIndex + 1];
-      const prev = prevId ? await getBlock(prevId) : undefined;
-      const next = nextId ? await getBlock(nextId) : undefined;
-      const createdAt = createdAtAfter(
-        targetDate,
-        prev?.createdAt,
-        next?.createdAt,
-      );
-      return finish([{ ...dragged, parentId: null, createdAt }]);
-    }
-
-    const targetContent = insertAtIndex(
-      targetParent.parent.content,
-      draggedId,
-      targetParent.index,
-    );
-
+  if (isDroppedOnParent && draggedParent.parent) {
+    const parent = draggedParent.parent;
+    const newSortKey =
+      parent.parentId === null
+        ? (() => {
+            const roots = childrenOf(targetBlocks, null, targetDate);
+            const parentIndex = roots.findIndex(
+              (entry) => entry.id === parent.id,
+            );
+            const nextRoot = roots[parentIndex + 1];
+            return sortKeyBetween(parent.sortKey, nextRoot?.sortKey ?? null);
+          })()
+        : sortKeyBeforeTargetAmongSiblings(
+            targetBlocks,
+            parent.parentId,
+            targetDate,
+            parent.id,
+            draggedId,
+          );
     return finish([
-      { ...targetParent.parent, content: targetContent },
-      { ...dragged, parentId: targetParent.parent.id },
+      {
+        ...dragged,
+        parentId: parent.parentId,
+        day: targetDate,
+        sortKey: newSortKey,
+      },
     ]);
   }
 
-  if (targetParent.parent === null) {
-    const sourceContent = [...draggedParent.parent.content];
-    sourceContent.splice(draggedParent.index, 1);
+  const newParentId = target.parentId;
+  const draggedParentId = dragged.parentId;
+  const sameParentReorder = draggedParentId === newParentId && !crossDay;
+  const newSortKey = sameParentReorder
+    ? sortKeyAfterMove(
+        targetBlocks,
+        newParentId,
+        targetDate,
+        draggedId,
+        targetId,
+      )
+    : sortKeyBeforeTargetAmongSiblings(
+        targetBlocks,
+        newParentId,
+        targetDate,
+        targetId,
+        draggedId,
+      );
 
-    const dragged = await getBlock(draggedId);
-    if (!dragged) return null;
+  const update: Block = {
+    ...dragged,
+    parentId: newParentId,
+    day: targetDate,
+    sortKey: newSortKey,
+  };
 
-    const targetIndex = targetRootIds.indexOf(targetId);
-    const prevId = targetRootIds[targetIndex - 1];
-    const nextId = targetRootIds[targetIndex + 1];
-    const prev = prevId ? await getBlock(prevId) : undefined;
-    const next = nextId ? await getBlock(nextId) : undefined;
-    const createdAt = createdAtAfter(
-      targetDate,
-      prev?.createdAt,
-      next?.createdAt,
-    );
-
-    return finish([
-      { ...dragged, parentId: null, createdAt },
-      { ...draggedParent.parent, content: sourceContent },
-    ]);
-  }
-
-  const sourceContent = [...draggedParent.parent.content];
-  sourceContent.splice(draggedParent.index, 1);
-
-  const targetContent = insertAtIndex(
-    targetParent.parent.content,
-    draggedId,
-    targetParent.index,
-  );
-
-  const dragged = await getBlock(draggedId);
-  if (!dragged) return null;
-
-  return finish([
-    { ...targetParent.parent, content: targetContent },
-    { ...draggedParent.parent, content: sourceContent },
-    { ...dragged, parentId: targetParent.parent.id },
-  ]);
+  return finish([update]);
 }
 
-export async function collectDescendantIds(
+export function collectDescendantIds(
   blockId: string,
-  getBlock: (id: string) => Promise<Block | undefined>,
-): Promise<string[]> {
-  const block = await getBlock(blockId);
-  if (!block) return [];
-
+  blocks: Block[],
+): string[] {
   const ids: string[] = [];
-  for (const childId of block.content) {
-    ids.push(childId, ...(await collectDescendantIds(childId, getBlock)));
+  for (const child of childrenOf(blocks, blockId)) {
+    ids.push(child.id, ...collectDescendantIds(child.id, blocks));
   }
   return ids;
-}
-
-export function sortRootBlocks(blocks: Block[]): Block[] {
-  return [...blocks].sort((a, b) => a.createdAt.localeCompare(b.createdAt));
-}
-
-export function rootBlockIds(blocks: Block[]): string[] {
-  return uniqueIds(sortRootBlocks(blocks).map((block) => block.id));
 }

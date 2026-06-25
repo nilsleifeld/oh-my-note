@@ -840,7 +840,6 @@ test.describe("Toggle-Block", () => {
         parentId: null,
         day: today,
         createdAt: `${today}T10:00:00.000Z`,
-        content: ["toggle-child"],
         properties: {
           title: "Abschnitt",
           checked: false,
@@ -855,7 +854,6 @@ test.describe("Toggle-Block", () => {
         parentId: "toggle-parent",
         day: today,
         createdAt: `${today}T10:30:00.000Z`,
-        content: [],
         properties: {
           title: "Detail",
           checked: false,
@@ -893,7 +891,6 @@ test.describe("Toggle-Block", () => {
         parentId: null,
         day: today,
         createdAt: `${today}T10:00:00.000Z`,
-        content: ["toggle-child"],
         properties: {
           title: "Abschnitt",
           checked: false,
@@ -908,7 +905,6 @@ test.describe("Toggle-Block", () => {
         parentId: "toggle-parent",
         day: today,
         createdAt: `${today}T10:30:00.000Z`,
-        content: [],
         properties: {
           title: "Detail",
           checked: false,
@@ -959,7 +955,6 @@ test.describe("Toggle-Block", () => {
         parentId: null,
         day: today,
         createdAt: `${today}T10:00:00.000Z`,
-        content: ["text-child"],
         properties: {
           title: "Parent",
           checked: false,
@@ -974,7 +969,6 @@ test.describe("Toggle-Block", () => {
         parentId: "text-parent",
         day: today,
         createdAt: `${today}T10:30:00.000Z`,
-        content: [],
         properties: {
           title: "Child",
           checked: false,
@@ -1023,7 +1017,6 @@ test.describe("Drag & Drop", () => {
         parentId: null,
         day: today,
         createdAt: `${today}T10:00:00.000Z`,
-        content: [],
         properties: {
           title: "Oben",
           checked: false,
@@ -1038,7 +1031,6 @@ test.describe("Drag & Drop", () => {
         parentId: null,
         day: today,
         createdAt: `${today}T11:00:00.000Z`,
-        content: [],
         properties: {
           title: "Unten",
           checked: false,
@@ -1074,7 +1066,6 @@ test.describe("Drag & Drop", () => {
         parentId: null,
         day: yesterday,
         createdAt: `${yesterday}T10:00:00.000Z`,
-        content: [],
         properties: {
           title: "Gestern",
           checked: false,
@@ -1089,7 +1080,6 @@ test.describe("Drag & Drop", () => {
         parentId: null,
         day: today,
         createdAt: `${today}T11:00:00.000Z`,
-        content: [],
         properties: {
           title: "Heute",
           checked: false,
@@ -1447,14 +1437,12 @@ test.describe("Vim-Block-Navigation", () => {
     day: string,
     createdAt: string,
     parentId: string | null = null,
-    content: string[] = [],
   ) => ({
     id,
     type: "text" as const,
     parentId,
     day,
     createdAt,
-    content,
     properties: {
       title,
       checked: false,
@@ -1537,14 +1525,7 @@ test.describe("Vim-Block-Navigation", () => {
   test("navigiert durch verschachtelte Blöcke", async ({ page }) => {
     const today = todayISO();
     await gotoAppWithBlocks(page, [
-      seedTextBlock(
-        "nav-parent",
-        "Parent",
-        today,
-        `${today}T10:00:00.000Z`,
-        null,
-        ["nav-child"],
-      ),
+      seedTextBlock("nav-parent", "Parent", today, `${today}T10:00:00.000Z`),
       seedTextBlock(
         "nav-child",
         "Child",
@@ -1694,8 +1675,6 @@ test.describe("Vim-Block-Navigation", () => {
         "Parent",
         today,
         `${today}T12:00:00.000Z`,
-        null,
-        ["dd-yank-child"],
       ),
       seedTextBlock(
         "dd-yank-child",
@@ -1805,7 +1784,6 @@ test.describe("Vim-Block-Navigation", () => {
         parentId: null,
         day: today,
         createdAt: `${today}T10:00:00.000Z`,
-        content: [],
         properties: {
           title: "Aufgabe",
           checked: false,
@@ -1949,7 +1927,6 @@ test.describe("Vim-Block-Navigation", () => {
         parentId: null,
         day: today,
         createdAt: `${today}T10:00:00.000Z`,
-        content: [],
         properties: {
           title: "Aufgabe",
           checked: false,
@@ -1991,7 +1968,6 @@ test.describe("Vim-Block-Navigation", () => {
         parentId: null,
         day: today,
         createdAt: `${today}T10:00:00.000Z`,
-        content: ["space-toggle-child"],
         properties: {
           title: "Abschnitt",
           checked: false,
@@ -2044,14 +2020,7 @@ test.describe("Vim-Block-Navigation", () => {
     await gotoAppWithBlocks(page, [
       seedTextBlock("yy-a", "Alpha", today, `${today}T10:00:00.000Z`),
       seedTextBlock("yy-b", "Beta", today, `${today}T11:00:00.000Z`),
-      seedTextBlock(
-        "yy-parent",
-        "Parent",
-        today,
-        `${today}T12:00:00.000Z`,
-        null,
-        ["yy-child"],
-      ),
+      seedTextBlock("yy-parent", "Parent", today, `${today}T12:00:00.000Z`),
       seedTextBlock(
         "yy-child",
         "Kind",

@@ -1,4 +1,6 @@
 import type { Block, BlockType } from "../types/models";
+import { normalizeBlock } from "./blockQueryUtils";
+import { sortKeyBetween, sortKeysBetween } from "../utils/sortKey";
 
 type BlockSeed = {
   id: string;
@@ -12,23 +14,67 @@ type BlockSeed = {
   language?: string;
 };
 
-function seedBlock(def: BlockSeed): Block {
-  return {
-    id: def.id,
-    type: def.type,
-    parentId: def.parentId ?? null,
-    day: def.day,
-    createdAt: def.createdAt,
-    content: def.content ?? [],
-    properties: {
-      title: def.title ?? "",
-      checked: def.checked ?? false,
-      language: def.language ?? "",
-      imageData: "",
-      open: true,
-    },
-    comments: [],
-  };
+function finalizeSeedBlocks(seeds: BlockSeed[]): Block[] {
+  const sortKeys = new Map<string, string>();
+
+  const rootsByDay = new Map<string, BlockSeed[]>();
+  for (const seed of seeds.filter((entry) => !entry.parentId)) {
+    const dayRoots = rootsByDay.get(seed.day) ?? [];
+    dayRoots.push(seed);
+    rootsByDay.set(seed.day, dayRoots);
+  }
+
+  for (const dayRoots of rootsByDay.values()) {
+    const sorted = [...dayRoots].sort((a, b) =>
+      a.createdAt.localeCompare(b.createdAt),
+    );
+    const keys = sortKeysBetween(null, null, sorted.length);
+    sorted.forEach((seed, index) => sortKeys.set(seed.id, keys[index]));
+  }
+
+  for (const seed of seeds) {
+    if (!seed.content?.length) continue;
+    const keys = sortKeysBetween(null, null, seed.content.length);
+    seed.content.forEach((childId, index) => {
+      sortKeys.set(childId, keys[index]);
+    });
+  }
+
+  const childrenByParent = new Map<string, BlockSeed[]>();
+  for (const seed of seeds.filter((entry) => entry.parentId)) {
+    const siblings = childrenByParent.get(seed.parentId!) ?? [];
+    siblings.push(seed);
+    childrenByParent.set(seed.parentId!, siblings);
+  }
+
+  for (const [, siblings] of childrenByParent) {
+    const missing = siblings.filter((child) => !sortKeys.has(child.id));
+    if (!missing.length) continue;
+    const sorted = [...missing].sort((a, b) =>
+      a.createdAt.localeCompare(b.createdAt),
+    );
+    const keys = sortKeysBetween(null, null, sorted.length);
+    sorted.forEach((child, index) => sortKeys.set(child.id, keys[index]));
+  }
+
+  return seeds.map((seed) =>
+    normalizeBlock({
+      id: seed.id,
+      type: seed.type,
+      parentId: seed.parentId ?? null,
+      day: seed.day,
+      createdAt: seed.createdAt,
+      sortKey: sortKeys.get(seed.id) ?? sortKeyBetween(null, null),
+      properties: {
+        title: seed.title ?? "",
+        checked: seed.checked ?? false,
+        language: seed.language ?? "",
+        imageData: "",
+        open: true,
+      },
+      comments: [],
+    }),
+  );
 }
 
 /** Three days of sample note-tracking data for local mock mode. */
@@ -360,5 +406,5 @@ export function createMockSeedBlocks(): Block[] {
     },
   ];
 
-  return seeds.map(seedBlock);
+  return finalizeSeedBlocks(seeds);
 }

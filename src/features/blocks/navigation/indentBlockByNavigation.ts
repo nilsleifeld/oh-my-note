@@ -1,9 +1,9 @@
 import type { QueryClient } from "@tanstack/react-query";
-import type { Block, BlockChange } from "../../../types/models";
+import type { BlockChange } from "../../../types/models";
 import {
+  childrenOf,
   findParentInContext,
   indentBlock,
-  rootBlockIds,
 } from "../../../utils/blockTree";
 import { queryKeys } from "../../../lib/query/queryKeys";
 import {
@@ -16,33 +16,32 @@ import {
   persistChange,
   rollbackChange,
 } from "../cache/blockCache";
+import type { Block } from "../../../types/models";
 
 export async function indentBlockByNavigation(
   queryClient: QueryClient,
   blockId: string,
 ): Promise<BlockChange | null> {
   const block = await fetchBlock(queryClient, blockId);
-  const roots =
+  const blocks =
     queryClient.getQueryData<Block[]>(queryKeys.day(block.day)) ?? [];
-  const rootIds = rootBlockIds(roots);
-  const getBlockFn = (id: string) => fetchBlock(queryClient, id);
-  const parentInfo = await findParentInContext(blockId, rootIds, getBlockFn);
+  const parentInfo = findParentInContext(blockId, blocks, block.day);
   if (!parentInfo || parentInfo.index === 0) return null;
 
-  let previousSibling: Block | null;
-  let parent: Block | null = null;
+  let previousSibling;
+  let parent = null;
 
   if (parentInfo.parent === null) {
-    const prevId = rootIds[parentInfo.index - 1];
-    previousSibling = (await fetchBlock(queryClient, prevId)) ?? null;
+    previousSibling = childrenOf(blocks, null, block.day)[parentInfo.index - 1];
   } else {
-    const prevId = parentInfo.parent.content[parentInfo.index - 1];
-    previousSibling = (await fetchBlock(queryClient, prevId)) ?? null;
+    previousSibling = childrenOf(blocks, parentInfo.parent.id)[
+      parentInfo.index - 1
+    ];
     parent = parentInfo.parent;
   }
 
   const snapshot = buildIndentSnapshot(block, previousSibling, parent);
-  const updates = await indentBlock(blockId, rootIds, getBlockFn);
+  const updates = indentBlock(blockId, blocks, block.day);
   if (!updates) return null;
 
   const change = buildTreeChange(snapshot, updates);

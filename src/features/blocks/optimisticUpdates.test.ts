@@ -5,9 +5,10 @@ import { describe, expect, it } from "vitest";
 import {
   applyChangeToState,
   createEmptyCacheState,
+  getAllBlocksFromState,
   getBlockFromState,
   getDayRootsFromState,
-  patchDayRootsList,
+  patchDayBlocksList,
   rollbackChangeInState,
   setBlockInState,
   setBlocksInState,
@@ -26,10 +27,12 @@ import {
   buildTypeChange,
 } from "./changes/buildBlockChanges";
 import {
+  childBlockIds,
   indentBlock,
   moveBlockInTree,
   outdentBlock,
 } from "../../utils/blockTree";
+import { sortKeyBetween } from "../../utils/sortKey";
 import { DATE, makeBlock, sampleTreeBlocks } from "./test/fixtures";
 
 /** @param {Block[]} blocks */
@@ -37,16 +40,16 @@ function stateFromBlocks(blocks) {
   return setBlocksInState(createEmptyCacheState(), blocks);
 }
 
-/** @param {BlockCacheState} state */
-function getBlockSync(state) {
-  return async (/** @type {string} */ id) => getBlockFromState(state, id);
-}
-
 /** @param {BlockCacheState} state @param {string} id @param {Record<string, unknown>} partial */
 function expectBlock(state, id, partial) {
   const block = getBlockFromState(state, id);
   expect(block).toBeDefined();
   expect(block).toMatchObject(partial);
+}
+
+/** @param {BlockCacheState} state @param {string} parentId */
+function childIds(state, parentId) {
+  return childBlockIds(getAllBlocksFromState(state), parentId);
 }
 
 describe("blockCacheState", () => {
@@ -61,16 +64,21 @@ describe("blockCacheState", () => {
     expect(getBlockFromState(state, "c")?.parentId).toBe("a");
   });
 
-  it("patchDayRootsList inserts, updates, and removes roots", () => {
-    const roots = [makeBlock({ id: "a", createdAt: `${DATE}T10:00:00.000Z` })];
+  it("patchDayBlocksList inserts, updates, and removes blocks", () => {
+    const blocks = [
+      makeBlock({ id: "a", sortKey: sortKeyBetween(null, null) }),
+    ];
 
-    const inserted = patchDayRootsList(
-      roots,
-      makeBlock({ id: "b", createdAt: `${DATE}T11:00:00.000Z` }),
+    const inserted = patchDayBlocksList(
+      blocks,
+      makeBlock({
+        id: "b",
+        sortKey: sortKeyBetween(blocks[0].sortKey, null),
+      }),
     );
     expect(inserted.map((block) => block.id)).toEqual(["a", "b"]);
 
-    const updated = patchDayRootsList(inserted, {
+    const updated = patchDayBlocksList(inserted, {
       ...inserted[1],
       properties: {
         title: "changed",
@@ -82,15 +90,8 @@ describe("blockCacheState", () => {
     });
     expect(updated[1].properties.title).toBe("changed");
 
-    const removed = patchDayRootsList(
-      updated,
-      makeBlock({
-        id: "b",
-        parentId: "a",
-        createdAt: `${DATE}T11:00:00.000Z`,
-      }),
-    );
-    expect(removed.map((block) => block.id)).toEqual(["a"]);
+    const withoutB = updated.filter((block) => block.id !== "b");
+    expect(withoutB.map((block) => block.id)).toEqual(["a"]);
   });
 });
 
@@ -159,7 +160,7 @@ describe("optimistic updates", () => {
     expectBlock(rolledBack, "a", { id: "a" });
   });
 
-  it("deleting a child updates parent content", () => {
+  it("deleting a child removes it from the day blocks", () => {
     const state = initial();
     const child = /** @type {Block} */ getBlockFromState(state, "c");
     const parent = /** @type {Block} */ getBlockFromState(state, "a");
@@ -167,10 +168,10 @@ describe("optimistic updates", () => {
 
     const applied = applyChangeToState(state, change);
     expect(getBlockFromState(applied, "c")).toBeUndefined();
-    expectBlock(applied, "a", { content: [] });
+    expect(childIds(applied, "a")).toEqual([]);
 
     const rolledBack = rollbackChangeInState(applied, change);
-    expectBlock(rolledBack, "a", { content: ["c"] });
+    expect(childIds(rolledBack, "a")).toEqual(["c"]);
     expectBlock(rolledBack, "c", { id: "c" });
   });
 
@@ -178,7 +179,7 @@ describe("optimistic updates", () => {
     const state = initial();
     const child = makeBlock({
       id: "new-root",
-      createdAt: `${DATE}T12:30:00.000Z`,
+      sortKey: sortKeyBetween(getBlockFromState(state, "b")!.sortKey, null),
     });
     const change = buildCreateRootChange(child);
 
@@ -194,25 +195,28 @@ describe("optimistic updates", () => {
     ).toEqual(["a", "b"]);
   });
 
-  it("creating a child updates parent content and rolls back", () => {
+  it("creating a child adds it to parent siblings and rolls back", () => {
     const state = initial();
-    const parent = /** @type {Block} */ getBlockFromState(state, "a");
-    const child = makeBlock({ id: "new-child", parentId: "a" });
-    const change = buildCreateChildChange(parent, child, 1);
+    const child = makeBlock({
+      id: "new-child",
+      parentId: "a",
+      sortKey: sortKeyBetween(getBlockFromState(state, "c")!.sortKey, null),
+    });
+    const change = buildCreateChildChange(child);
 
     const applied = applyChangeToState(state, change);
-    expectBlock(applied, "a", { content: ["c", "new-child"] });
+    expect(childIds(applied, "a")).toEqual(["c", "new-child"]);
     expectBlock(applied, "new-child", { parentId: "a" });
 
     const rolledBack = rollbackChangeInState(applied, change);
     expect(getBlockFromState(rolledBack, "new-child")).toBeUndefined();
-    expectBlock(rolledBack, "a", { content: ["c"] });
+    expect(childIds(rolledBack, "a")).toEqual(["c"]);
   });
 
-  it("indent moves a root under the previous sibling", async () => {
+  it("indent moves a root under the previous sibling", () => {
     const state = initial();
-    const rootIds = ["a", "b"];
-    const updates = await indentBlock("b", rootIds, getBlockSync(state));
+    const blocks = sampleTreeBlocks();
+    const updates = indentBlock("b", blocks, DATE);
     expect(updates).not.toBeNull();
 
     const snapshot = buildIndentSnapshot(
@@ -223,7 +227,7 @@ describe("optimistic updates", () => {
     const change = buildTreeChange(snapshot, /** @type {Block[]} */ updates);
     const applied = applyChangeToState(state, change);
 
-    expectBlock(applied, "a", { content: ["c", "b"] });
+    expect(childIds(applied, "a")).toEqual(["c", "b"]);
     expectBlock(applied, "b", { parentId: "a" });
     expect(
       getDayRootsFromState(applied, DATE).map((entry) => entry.id),
@@ -236,10 +240,10 @@ describe("optimistic updates", () => {
     expectBlock(rolledBack, "b", { parentId: null });
   });
 
-  it("outdent promotes a child to a root block", async () => {
+  it("outdent promotes a child to a root block", () => {
     const state = initial();
-    const rootIds = ["a", "b"];
-    const updates = await outdentBlock("c", rootIds, DATE, getBlockSync(state));
+    const blocks = sampleTreeBlocks();
+    const updates = outdentBlock("c", blocks, DATE);
     expect(updates).not.toBeNull();
 
     const parent = /** @type {Block} */ getBlockFromState(state, "a");
@@ -250,7 +254,7 @@ describe("optimistic updates", () => {
     );
     const applied = applyChangeToState(state, change);
 
-    expectBlock(applied, "a", { content: [] });
+    expect(childIds(applied, "a")).toEqual([]);
     expectBlock(applied, "c", { parentId: null });
     expect(
       getDayRootsFromState(applied, DATE).map((entry) => entry.id),
@@ -263,16 +267,10 @@ describe("optimistic updates", () => {
     ).toEqual(["a", "b"]);
   });
 
-  it("move reorders root blocks", async () => {
+  it("move reorders root blocks", () => {
     const state = initial();
-    const rootIds = ["a", "b"];
-    const updates = await moveBlockInTree(
-      "b",
-      "a",
-      rootIds,
-      DATE,
-      getBlockSync(state),
-    );
+    const blocks = sampleTreeBlocks();
+    const updates = moveBlockInTree("b", "a", blocks, DATE);
     expect(updates).not.toBeNull();
 
     const dragged = /** @type {Block} */ getBlockFromState(state, "b");
@@ -292,16 +290,10 @@ describe("optimistic updates", () => {
     ).toEqual(["a", "b"]);
   });
 
-  it("move between parents updates both parent contents", async () => {
+  it("move between parents updates sibling order", () => {
     const state = initial();
-    const rootIds = ["a", "b"];
-    const updates = await moveBlockInTree(
-      "c",
-      "d",
-      rootIds,
-      DATE,
-      getBlockSync(state),
-    );
+    const blocks = sampleTreeBlocks();
+    const updates = moveBlockInTree("c", "d", blocks, DATE);
     expect(updates).not.toBeNull();
 
     const dragged = /** @type {Block} */ getBlockFromState(state, "c");
@@ -313,13 +305,13 @@ describe("optimistic updates", () => {
     );
     const applied = applyChangeToState(state, change);
 
-    expectBlock(applied, "a", { content: [] });
-    expectBlock(applied, "b", { content: ["c", "d"] });
+    expect(childIds(applied, "a")).toEqual([]);
+    expect(childIds(applied, "b")).toEqual(["c", "d"]);
     expectBlock(applied, "c", { parentId: "b" });
 
     const rolledBack = rollbackChangeInState(applied, change);
-    expectBlock(rolledBack, "a", { content: ["c"] });
-    expectBlock(rolledBack, "b", { content: ["d"] });
+    expect(childIds(rolledBack, "a")).toEqual(["c"]);
+    expect(childIds(rolledBack, "b")).toEqual(["d"]);
     expectBlock(rolledBack, "c", { parentId: "a" });
   });
 });

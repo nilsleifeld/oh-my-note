@@ -1,4 +1,5 @@
 import { expect, type Locator, type Page } from "@playwright/test";
+import { sortKeysBetween } from "../../src/utils/sortKey";
 import {
   forceSeedMockBlocksScript,
   readMockBlocksScript,
@@ -13,7 +14,7 @@ const SENTINEL_BLOCKS = [
     parentId: null,
     day: "1999-01-01",
     createdAt: "1999-01-01T12:00:00.000Z",
-    content: [],
+    sortKey: "a0",
     properties: {
       title: "sentinel",
       checked: false,
@@ -46,7 +47,7 @@ export type SeedBlock = {
   parentId: string | null;
   day: string;
   createdAt: string;
-  content: string[];
+  sortKey?: string;
   properties: {
     title: string;
     checked: boolean;
@@ -71,17 +72,38 @@ export function shiftDate(date: string, days: number) {
   return d.toISOString().slice(0, 10);
 }
 
-function normalizeSeedBlock(block: SeedBlock): SeedBlock {
-  return {
+function assignSortKeysToSeeds(blocks: SeedBlock[]): SeedBlock[] {
+  const byGroup = new Map<string, SeedBlock[]>();
+
+  for (const block of blocks) {
+    const groupKey = `${block.day}\0${block.parentId ?? ""}`;
+    const siblings = byGroup.get(groupKey) ?? [];
+    siblings.push(block);
+    byGroup.set(groupKey, siblings);
+  }
+
+  const assigned = new Map<string, string>();
+  for (const siblings of byGroup.values()) {
+    const sorted = [...siblings].sort((a, b) =>
+      a.createdAt.localeCompare(b.createdAt),
+    );
+    const keys = sortKeysBetween(null, null, sorted.length);
+    sorted.forEach((block, index) => {
+      assigned.set(block.id, keys[index]!);
+    });
+  }
+
+  return blocks.map((block) => ({
     ...block,
+    sortKey: assigned.get(block.id) ?? block.sortKey ?? "a0",
     comments: block.comments ?? [],
-  };
+  }));
 }
 
 export async function gotoAppWithBlocks(page: Page, blocks: SeedBlock[]) {
   await page.addInitScript(
     forceSeedMockBlocksScript,
-    blocks.map(normalizeSeedBlock),
+    assignSortKeysToSeeds(blocks),
   );
 
   await page.goto("/");

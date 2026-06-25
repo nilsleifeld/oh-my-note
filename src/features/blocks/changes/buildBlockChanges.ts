@@ -1,9 +1,4 @@
-import type {
-  Block,
-  BlockChange,
-  BlockComment,
-  BlockType,
-} from "../../../types/models";
+import type { Block, BlockChange } from "../../../types/models";
 import { cloneBlock } from "../cache/blockCacheState";
 
 export function buildPropertyChange(
@@ -51,7 +46,10 @@ export function buildToggleOpenChange(
   return buildPropertyChange(block, { open });
 }
 
-export function buildTypeChange(block: Block, type: BlockType): BlockChange {
+export function buildTypeChange(
+  block: Block,
+  type: Block["type"],
+): BlockChange {
   const snapshot = cloneBlock(block);
   const update = { ...cloneBlock(block), type };
 
@@ -60,7 +58,7 @@ export function buildTypeChange(block: Block, type: BlockType): BlockChange {
 
 export function buildSlashTypeChange(
   block: Block,
-  type: BlockType,
+  type: Block["type"],
 ): BlockChange {
   const snapshot = cloneBlock(block);
   const update = {
@@ -116,7 +114,7 @@ export function buildToggleShortcutChange(
 
 export function buildHeadingShortcutChange(
   block: Block,
-  type: Extract<BlockType, "h1" | "h2" | "h3" | "h4" | "h5">,
+  type: Extract<Block["type"], "h1" | "h2" | "h3" | "h4" | "h5">,
   title: string,
 ): BlockChange {
   const snapshot = cloneBlock(block);
@@ -168,17 +166,12 @@ export function buildDeleteChange(
   block: Block,
   parent: Block | null,
 ): BlockChange {
-  if (parent) {
-    const content = parent.content.filter((childId) => childId !== block.id);
-    return {
-      snapshot: [cloneBlock(block), cloneBlock(parent)],
-      updates: [{ ...parent, content }],
-      deletedIds: [block.id],
-    };
-  }
+  const snapshot = parent
+    ? [cloneBlock(block), cloneBlock(parent)]
+    : [cloneBlock(block)];
 
   return {
-    snapshot: [cloneBlock(block)],
+    snapshot,
     updates: [],
     deletedIds: [block.id],
   };
@@ -192,17 +185,10 @@ export function buildCreateRootChange(child: Block): BlockChange {
   };
 }
 
-export function buildCreateChildChange(
-  parent: Block,
-  child: Block,
-  index: number,
-): BlockChange {
-  const content = parent.content.filter((id) => id !== child.id);
-  content.splice(index, 0, child.id);
-
+export function buildCreateChildChange(child: Block): BlockChange {
   return {
-    snapshot: [cloneBlock(parent)],
-    updates: [{ ...parent, content }, child],
+    snapshot: [],
+    updates: [child],
     createdIds: [child.id],
   };
 }
@@ -256,7 +242,7 @@ export function buildMoveSnapshot(
 
 export function buildAddCommentChange(
   block: Block,
-  comment: BlockComment,
+  comment: Block["comments"][number],
 ): BlockChange {
   const snapshot = cloneBlock(block);
   const update = {

@@ -36,15 +36,15 @@ export type Block = {
   parentId: string | null;
   /** YYYY-MM-DD — day section this block belongs to */
   day: string;
-  /** ISO timestamp — ordering within a day */
+  /** ISO timestamp — metadata only */
   createdAt: string;
-  /** Child block IDs (tree structure) */
-  content: string[];
+  /** Fractional index — ordering among siblings (same parentId) */
+  sortKey: string;
   properties: BlockProperties;
   comments: BlockComment[];
 };
 
-export type BlockSortField = "createdAt";
+export type BlockSortField = "sortKey";
 
 export type BlockSortBy = {
   field: BlockSortField;

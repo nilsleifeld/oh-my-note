@@ -1,6 +1,6 @@
 import type { BlockChange } from "../../../types/models";
 import type { QueryClient } from "@tanstack/react-query";
-import { findParentInContext, rootBlockIds } from "../../../utils/blockTree";
+import { findParentInContext } from "../../../utils/blockTree";
 import type { Block } from "../../../types/models";
 import { queryKeys } from "../../../lib/query/queryKeys";
 import { buildDeleteChange } from "../changes/buildBlockChanges";
@@ -17,11 +17,9 @@ export async function deleteBlockByNavigation(
   blockId: string,
 ): Promise<BlockChange | null> {
   const block = await fetchBlock(queryClient, blockId);
-  const roots =
+  const blocks =
     queryClient.getQueryData<Block[]>(queryKeys.day(block.day)) ?? [];
-  const rootIds = rootBlockIds(roots);
-  const getBlockFn = (id: string) => fetchBlock(queryClient, id);
-  const parentInfo = await findParentInContext(blockId, rootIds, getBlockFn);
+  const parentInfo = findParentInContext(blockId, blocks, block.day);
   if (!parentInfo) return null;
 
   const change = buildDeleteChange(block, parentInfo.parent);
@@ -34,9 +32,10 @@ export async function deleteBlockByNavigation(
     throw error;
   }
 
-  const remainingRoots =
+  const remainingBlocks =
     queryClient.getQueryData<Block[]>(queryKeys.day(block.day)) ?? [];
-  if (remainingRoots.length === 0) {
+  const hasRoots = remainingBlocks.some((entry) => entry.parentId === null);
+  if (!hasRoots) {
     handleDayEmptied(queryClient, block.day);
   }
 

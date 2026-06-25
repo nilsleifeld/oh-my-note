@@ -1,7 +1,7 @@
 import type { QueryClient } from "@tanstack/react-query";
 import type { Block, BlockChange } from "../../../types/models";
-import { findParentInContext, rootBlockIds } from "../../../utils/blockTree";
-import { createdAtAfter } from "../../../utils/date";
+import { childrenOf, findParentInContext } from "../../../utils/blockTree";
+import { sortKeyBetween } from "../../../utils/sortKey";
 import { queryKeys } from "../../../lib/query/queryKeys";
 import { buildTreeChange } from "../changes/buildBlockChanges";
 import { cloneBlock } from "../cache/blockCacheState";
@@ -26,15 +26,9 @@ export async function pasteBlockByNavigation(
   if (!clipboard?.blocks.length) return null;
 
   const target = await fetchBlock(queryClient, targetBlockId);
-  const roots =
+  const blocks =
     queryClient.getQueryData<Block[]>(queryKeys.day(target.day)) ?? [];
-  const rootIds = rootBlockIds(roots);
-  const getBlockFn = (id: string) => fetchBlock(queryClient, id);
-  const parentInfo = await findParentInContext(
-    targetBlockId,
-    rootIds,
-    getBlockFn,
-  );
+  const parentInfo = findParentInContext(targetBlockId, blocks, target.day);
   if (!parentInfo) return null;
 
   const idMap = new Map<string, string>();
@@ -52,7 +46,6 @@ export async function pasteBlockByNavigation(
         block.id === oldRootId
           ? (parentInfo.parent?.id ?? null)
           : (idMap.get(block.parentId!) ?? null),
-      content: block.content.map((childId) => idMap.get(childId)!),
       day: target.day,
     };
   });
@@ -61,29 +54,27 @@ export async function pasteBlockByNavigation(
   const newRoot = remappedBlocks.find((block) => block.id === newRootId);
   if (!newRoot) return null;
 
-  const updates: Block[] = [...remappedBlocks];
-  const snapshot: Block[] = [];
-
   if (parentInfo.parent === null) {
-    const nextRootId = rootIds[parentInfo.index + 1];
-    const nextRoot = nextRootId
-      ? await fetchBlock(queryClient, nextRootId)
-      : undefined;
-    newRoot.createdAt = createdAtAfter(
-      target.day,
-      target.createdAt,
-      nextRoot?.createdAt,
+    const siblings = childrenOf(blocks, null, target.day);
+    const targetIndex = siblings.findIndex(
+      (entry) => entry.id === targetBlockId,
     );
+    const nextRoot = siblings[targetIndex + 1];
+    newRoot.sortKey = sortKeyBetween(target.sortKey, nextRoot?.sortKey ?? null);
   } else {
-    snapshot.push(cloneBlock(parentInfo.parent));
-    const content = [...parentInfo.parent.content];
-    content.splice(parentInfo.index + 1, 0, newRootId);
-    updates.push({ ...parentInfo.parent, content });
+    const siblings = childrenOf(blocks, parentInfo.parent.id);
+    const insertIndex = parentInfo.index + 1;
+    const prev = siblings[insertIndex - 1];
+    const next = siblings[insertIndex];
+    newRoot.sortKey = sortKeyBetween(
+      prev?.sortKey ?? null,
+      next?.sortKey ?? null,
+    );
   }
 
   const change = buildTreeChange(
-    snapshot,
-    updates,
+    [],
+    remappedBlocks,
     remappedBlocks.map((block) => block.id),
   );
 

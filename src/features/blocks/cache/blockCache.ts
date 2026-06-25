@@ -3,21 +3,21 @@ import { getApiClient } from "../../../api/client";
 import type { Block, BlockChange } from "../../../types/models";
 import { queryKeys } from "../../../lib/query/queryKeys";
 import { removeDateFromDayIndex } from "../../days/cache/dayListCache";
-import {
-  affectsDayRootQuery,
-  cloneBlock,
-  patchDayRootsList,
-} from "./blockCacheState";
+import { cloneBlock, patchDayBlocksList } from "./blockCacheState";
 
 export {
-  affectsDayRootQuery,
+  affectsDayQuery,
   applyChangeToState,
   cloneBlock,
   createEmptyCacheState,
+  getAllBlocksFromState,
   getBlockFromState,
+  getDayBlocksFromState,
   getDayRootsFromState,
+  patchDayBlocksList,
   patchDayRootsList,
   rollbackChangeInState,
+  rootIdsFromState,
   setBlockInState,
   setBlocksInState,
 } from "./blockCacheState";
@@ -33,7 +33,7 @@ function patchBlockQuery(queryClient: QueryClient, block: Block): void {
   queryClient.setQueryData(queryKeys.block(block.id), cloneBlock(block));
 }
 
-function patchDayRootQuery(
+function patchDayBlockQuery(
   queryClient: QueryClient,
   block: Block,
   prev?: Block,
@@ -42,10 +42,10 @@ function patchDayRootQuery(
   const current = queryClient.getQueryData<Block[]>(queryKeys.day(date)) ?? [];
   queryClient.setQueryData(
     queryKeys.day(date),
-    patchDayRootsList(current, block),
+    patchDayBlocksList(current, block),
   );
 
-  if (prev?.parentId === null && prev.day !== block.day) {
+  if (prev && prev.day !== block.day) {
     const oldCurrent =
       queryClient.getQueryData<Block[]>(queryKeys.day(prev.day)) ?? [];
     queryClient.setQueryData(
@@ -62,14 +62,23 @@ export function seedBlockQueries(
   for (const block of blocks) {
     patchBlockQuery(queryClient, block);
   }
+
+  const byDay = new Map<string, Block[]>();
+  for (const block of blocks) {
+    const dayBlocks = byDay.get(block.day) ?? [];
+    dayBlocks.push(block);
+    byDay.set(block.day, dayBlocks);
+  }
+
+  for (const [day, dayBlocks] of byDay) {
+    queryClient.setQueryData(queryKeys.day(day), dayBlocks.map(cloneBlock));
+  }
 }
 
 export function setBlock(queryClient: QueryClient, block: Block): void {
   const prev = getBlock(queryClient, block.id);
   patchBlockQuery(queryClient, block);
-  if (affectsDayRootQuery(prev, block)) {
-    patchDayRootQuery(queryClient, block, prev);
-  }
+  patchDayBlockQuery(queryClient, block, prev);
 }
 
 export function setBlocks(queryClient: QueryClient, blocks: Block[]): void {
@@ -80,16 +89,14 @@ export function setBlocks(queryClient: QueryClient, blocks: Block[]): void {
     patchBlockQuery(queryClient, block);
   }
   for (const block of blocks) {
-    if (affectsDayRootQuery(prevById.get(block.id), block)) {
-      patchDayRootQuery(queryClient, block, prevById.get(block.id));
-    }
+    patchDayBlockQuery(queryClient, block, prevById.get(block.id));
   }
 }
 
 export function removeBlocks(queryClient: QueryClient, ids: string[]): void {
   for (const id of ids) {
     const block = getBlock(queryClient, id);
-    if (block?.parentId === null) {
+    if (block) {
       const date = block.day;
       const current =
         queryClient.getQueryData<Block[]>(queryKeys.day(date)) ?? [];
@@ -123,6 +130,10 @@ export async function fetchBlock(
       return block;
     },
   });
+}
+
+export function getDayBlocks(queryClient: QueryClient, date: string): Block[] {
+  return queryClient.getQueryData<Block[]>(queryKeys.day(date)) ?? [];
 }
 
 export function applyChangeToCache(

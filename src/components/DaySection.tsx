@@ -3,7 +3,6 @@ import { useDayRootBlocks } from "../features/days/queries/useDayRootBlocks";
 import { useBlockTree } from "../features/blocks/useBlockTree";
 import { useDrag } from "../features/blocks/drag/DragProvider";
 import { formatDayTitle } from "../utils/date";
-import { uniqueIds } from "../utils/list";
 import { BlockRow } from "./block/BlockRow";
 import { DaySectionSkeleton } from "./ui/Skeleton";
 
@@ -73,9 +72,7 @@ export function DaySection({ date, isToday }: DaySectionProps) {
     );
   }
 
-  const blockIds = uniqueIds(
-    rowProps.pendingContent?.(rowProps.rootKey) ?? getRootIds(),
-  );
+  const blockIds = getRootIds();
 
   return (
     <section

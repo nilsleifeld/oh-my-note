@@ -8,10 +8,9 @@ export type DragState = {
 export type BlockRowProps = {
   blockId: string;
   date: string;
-  rootKey: string;
+  dayBlocks: Block[];
   rootIds: string[];
   dragState: DragState;
-  pendingContent?: (parentId: string) => string[] | undefined;
   onDragStart: (id: string) => void;
   onDragOver: (id: string) => void;
   onDrop: (id: string) => void;

@@ -1,16 +1,17 @@
 import type { Block } from "../../../types/models";
 import { cloneBlock } from "../cache/blockCacheState";
+import { childrenOf } from "../../../utils/blockTree";
 
 export async function collectSubtreeBlocks(
   blockId: string,
-  getBlock: (id: string) => Promise<Block | undefined>,
+  blocks: Block[],
 ): Promise<Block[]> {
-  const block = await getBlock(blockId);
+  const block = blocks.find((entry) => entry.id === blockId);
   if (!block) return [];
 
-  const blocks: Block[] = [cloneBlock(block)];
-  for (const childId of block.content) {
-    blocks.push(...(await collectSubtreeBlocks(childId, getBlock)));
+  const result: Block[] = [cloneBlock(block)];
+  for (const child of childrenOf(blocks, blockId)) {
+    result.push(...(await collectSubtreeBlocks(child.id, blocks)));
   }
-  return blocks;
+  return result;
 }

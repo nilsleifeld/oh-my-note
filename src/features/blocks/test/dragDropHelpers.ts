@@ -4,6 +4,7 @@
 import {
   applyChangeToState,
   createEmptyCacheState,
+  getAllBlocksFromState,
   getBlockFromState,
   getDayRootsFromState,
   setBlocksInState,
@@ -12,7 +13,11 @@ import {
   buildMoveSnapshot,
   buildTreeChange,
 } from "../changes/buildBlockChanges";
-import { findParentInContext, moveBlockInTree } from "../../../utils/blockTree";
+import {
+  childBlockIds,
+  findParentInContext,
+  moveBlockInTree,
+} from "../../../utils/blockTree";
 import { DATE } from "./fixtures";
 
 /**
@@ -25,43 +30,20 @@ export function stateFromBlocks(blocks) {
 
 /**
  * @param {BlockCacheState} state
- * @returns {(id: string) => Promise<Block | undefined>}
- */
-export function getBlockSync(state) {
-  return async (/** @type {string} */ id) => getBlockFromState(state, id);
-}
-
-/**
- * @param {BlockCacheState} state
  * @param {string} draggedId
  * @param {string} targetId
- * @param {string[]} rootIds
  */
-export async function applyDragDrop(state, draggedId, targetId, rootIds) {
-  const getBlock = getBlockSync(state);
-  const updates = await moveBlockInTree(
-    draggedId,
-    targetId,
-    rootIds,
-    DATE,
-    getBlock,
-  );
+export async function applyDragDrop(state, draggedId, targetId) {
+  const blocks = getAllBlocksFromState(state);
+  const updates = moveBlockInTree(draggedId, targetId, blocks, DATE);
 
   if (!updates) {
     return { updates: null, change: null, state };
   }
 
   const dragged = /** @type {Block} */ getBlockFromState(state, draggedId);
-  const draggedParent = await findParentInContext(
-    draggedId,
-    rootIds,
-    getBlockSync(state),
-  );
-  const targetParent = await findParentInContext(
-    targetId,
-    rootIds,
-    getBlockSync(state),
-  );
+  const draggedParent = findParentInContext(draggedId, blocks, DATE);
+  const targetParent = findParentInContext(targetId, blocks, DATE);
 
   const snapshot = buildMoveSnapshot(
     dragged,
@@ -82,7 +64,7 @@ export async function applyDragDrop(state, draggedId, targetId, rootIds) {
  * @returns {string[]}
  */
 export function childIds(state, id) {
-  return getBlockFromState(state, id)?.content ?? [];
+  return childBlockIds(getAllBlocksFromState(state), id);
 }
 
 /**

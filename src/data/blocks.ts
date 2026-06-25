@@ -39,7 +39,12 @@ export const codeLanguages: SelectOption[] = [
 
 export function createChildBlock(
   type: BlockType,
-  opts: { parentId: string | null; day: string; createdAt: string },
+  opts: {
+    parentId: string | null;
+    day: string;
+    createdAt: string;
+    sortKey: string;
+  },
 ): Block {
   return {
     id: crypto.randomUUID(),
@@ -47,7 +52,7 @@ export function createChildBlock(
     parentId: opts.parentId,
     day: opts.day,
     createdAt: opts.createdAt,
-    content: [],
+    sortKey: opts.sortKey,
     properties: {
       title: "",
       checked: false,

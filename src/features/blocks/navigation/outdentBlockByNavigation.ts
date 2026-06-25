@@ -1,10 +1,6 @@
 import type { QueryClient } from "@tanstack/react-query";
 import type { Block, BlockChange } from "../../../types/models";
-import {
-  findParentInContext,
-  outdentBlock,
-  rootBlockIds,
-} from "../../../utils/blockTree";
+import { findParentInContext, outdentBlock } from "../../../utils/blockTree";
 import { queryKeys } from "../../../lib/query/queryKeys";
 import {
   buildOutdentSnapshot,
@@ -22,19 +18,17 @@ export async function outdentBlockByNavigation(
   blockId: string,
 ): Promise<BlockChange | null> {
   const block = await fetchBlock(queryClient, blockId);
-  const roots =
+  const blocks =
     queryClient.getQueryData<Block[]>(queryKeys.day(block.day)) ?? [];
-  const rootIds = rootBlockIds(roots);
-  const getBlockFn = (id: string) => fetchBlock(queryClient, id);
-  const parentInfo = await findParentInContext(blockId, rootIds, getBlockFn);
+  const parentInfo = findParentInContext(blockId, blocks, block.day);
   if (!parentInfo || parentInfo.parent === null) return null;
 
   let grandparent = null;
   if (parentInfo.parent.parentId !== null) {
-    const grandparentInfo = await findParentInContext(
+    const grandparentInfo = findParentInContext(
       parentInfo.parent.id,
-      rootIds,
-      getBlockFn,
+      blocks,
+      block.day,
     );
     grandparent = grandparentInfo?.parent ?? null;
   }
@@ -44,7 +38,7 @@ export async function outdentBlockByNavigation(
     parentInfo.parent,
     grandparent ?? undefined,
   );
-  const updates = await outdentBlock(blockId, rootIds, block.day, getBlockFn);
+  const updates = outdentBlock(blockId, blocks, block.day);
   if (!updates) return null;
 
   const change = buildTreeChange(snapshot, updates);

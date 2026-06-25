@@ -1,9 +1,9 @@
 import type { Block, BlockChange } from "../../../types/models";
-import { sortRootBlocks } from "../../../utils/blockTree";
+import { rootBlockIds, sortRootBlocks } from "../../../utils/blockTree";
 
 export type BlockCacheState = {
   blocks: Map<string, Block>;
-  dayRoots: Map<string, Block[]>;
+  dayBlocks: Map<string, Block[]>;
 };
 
 export function cloneBlock(block: Block): Block {
@@ -13,7 +13,7 @@ export function cloneBlock(block: Block): Block {
     parentId: block.parentId,
     day: block.day,
     createdAt: block.createdAt,
-    content: [...block.content],
+    sortKey: block.sortKey,
     properties: { ...block.properties },
     comments: (block.comments ?? []).map((comment) => ({ ...comment })),
   };
@@ -22,7 +22,7 @@ export function cloneBlock(block: Block): Block {
 export function createEmptyCacheState(): BlockCacheState {
   return {
     blocks: new Map(),
-    dayRoots: new Map(),
+    dayBlocks: new Map(),
   };
 }
 
@@ -33,51 +33,63 @@ export function getBlockFromState(
   return state.blocks.get(id);
 }
 
+export function getDayBlocksFromState(
+  state: BlockCacheState,
+  date: string,
+): Block[] {
+  return state.dayBlocks.get(date) ?? [];
+}
+
 export function getDayRootsFromState(
   state: BlockCacheState,
   date: string,
 ): Block[] {
-  return state.dayRoots.get(date) ?? [];
+  return sortRootBlocks(getDayBlocksFromState(state, date), date);
 }
 
-export function affectsDayRootQuery(
-  prev: Block | undefined,
-  next: Block,
-): boolean {
-  if (next.parentId !== null) {
-    return prev !== undefined && prev.parentId === null;
-  }
-
+export function affectsDayQuery(prev: Block | undefined, next: Block): boolean {
   if (!prev) return true;
-  if (prev.parentId !== null) return true;
-  if (prev.createdAt !== next.createdAt) return true;
   if (prev.day !== next.day) return true;
-
+  if (prev.parentId !== next.parentId) return true;
+  if (prev.sortKey !== next.sortKey) return true;
   return false;
 }
 
+export function patchDayBlocksList(
+  currentBlocks: Block[],
+  block: Block,
+): Block[] {
+  const index = currentBlocks.findIndex((entry) => entry.id === block.id);
+  const cloned = cloneBlock(block);
+
+  if (index >= 0) {
+    const next = [...currentBlocks];
+    next[index] = cloned;
+    return next;
+  }
+
+  return [...currentBlocks, cloned];
+}
+
+/** @deprecated Use patchDayBlocksList — kept for tests during transition */
 export function patchDayRootsList(
   currentRoots: Block[],
   block: Block,
 ): Block[] {
-  const index = currentRoots.findIndex((entry) => entry.id === block.id);
-
   if (block.parentId !== null) {
-    if (index >= 0) {
-      return currentRoots.filter((entry) => entry.id !== block.id);
-    }
-    return currentRoots;
+    return currentRoots.filter((entry) => entry.id !== block.id);
   }
 
+  const index = currentRoots.findIndex((entry) => entry.id === block.id);
   const cloned = cloneBlock(block);
 
   if (index >= 0) {
     const next = [...currentRoots];
     next[index] = cloned;
-    return sortRootBlocks(next);
+    return sortRootBlocks(next, block.day);
   }
 
-  return sortRootBlocks([...currentRoots, cloned]);
+  return sortRootBlocks([...currentRoots, cloned], block.day);
 }
 
 export function setBlockInState(
@@ -88,26 +100,22 @@ export function setBlockInState(
   const blocks = new Map(state.blocks);
   blocks.set(block.id, cloneBlock(block));
 
-  let dayRoots = state.dayRoots;
-  if (affectsDayRootQuery(prev, block)) {
-    const date = block.day;
-    dayRoots = new Map(state.dayRoots);
-    dayRoots.set(
-      date,
-      patchDayRootsList(getDayRootsFromState(state, date), block),
-    );
+  const dayBlocks = new Map(state.dayBlocks);
+  dayBlocks.set(
+    block.day,
+    patchDayBlocksList(getDayBlocksFromState(state, block.day), block),
+  );
 
-    if (prev?.parentId === null && prev.day !== block.day) {
-      dayRoots.set(
-        prev.day,
-        getDayRootsFromState(state, prev.day).filter(
-          (entry) => entry.id !== block.id,
-        ),
-      );
-    }
+  if (prev && prev.day !== block.day) {
+    dayBlocks.set(
+      prev.day,
+      getDayBlocksFromState(state, prev.day).filter(
+        (entry) => entry.id !== block.id,
+      ),
+    );
   }
 
-  return { blocks, dayRoots };
+  return { blocks, dayBlocks };
 }
 
 export function removeBlocksFromState(
@@ -122,18 +130,13 @@ export function removeBlocksFromState(
 
     const blocks = new Map(next.blocks);
     blocks.delete(id);
-    let dayRoots = next.dayRoots;
+    const dayBlocks = new Map(next.dayBlocks);
+    dayBlocks.set(
+      block.day,
+      getDayBlocksFromState(next, block.day).filter((entry) => entry.id !== id),
+    );
 
-    if (block.parentId === null) {
-      const date = block.day;
-      dayRoots = new Map(next.dayRoots);
-      dayRoots.set(
-        date,
-        getDayRootsFromState(next, date).filter((entry) => entry.id !== id),
-      );
-    }
-
-    next = { blocks, dayRoots };
+    next = { blocks, dayBlocks };
   }
 
   return next;
@@ -174,4 +177,15 @@ export function rollbackChangeInState(
   }
 
   return setBlocksInState(next, change.snapshot);
+}
+
+export function getAllBlocksFromState(state: BlockCacheState): Block[] {
+  return [...state.blocks.values()];
+}
+
+export function rootIdsFromState(
+  state: BlockCacheState,
+  day: string,
+): string[] {
+  return rootBlockIds(getAllBlocksFromState(state), day);
 }

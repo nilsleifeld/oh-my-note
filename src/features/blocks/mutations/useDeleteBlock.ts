@@ -4,6 +4,7 @@ import { buildDeleteChange } from "../changes/buildBlockChanges";
 import {
   applyChangeToCache,
   fetchBlock,
+  getDayBlocks,
   handleDayEmptied,
   persistChange,
   rollbackChange,
@@ -16,12 +17,12 @@ export function useDeleteBlock(date: string, getRootIds: () => string[]) {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      const change = await resolveDeleteChange(queryClient, id, getRootIds());
+      const change = await resolveDeleteChange(queryClient, id, date);
       if (!change) return;
       await persistChange(change);
     },
     onMutate: async (id) => {
-      const change = await resolveDeleteChange(queryClient, id, getRootIds());
+      const change = await resolveDeleteChange(queryClient, id, date);
       if (!change) return undefined;
       applyChangeToCache(queryClient, change);
       return { change };
@@ -44,11 +45,13 @@ export function useDeleteBlock(date: string, getRootIds: () => string[]) {
 async function resolveDeleteChange(
   queryClient: ReturnType<typeof useQueryClient>,
   id: string,
-  rootIds: string[],
+  date: string,
 ) {
-  const getBlockFn = (blockId: string) => fetchBlock(queryClient, blockId);
-  const parentInfo = await findParentInContext(id, rootIds, getBlockFn);
-  const block = await getBlockFn(id);
+  const blocks = getDayBlocks(queryClient, date);
+  const parentInfo = findParentInContext(id, blocks, date);
+  const block =
+    blocks.find((entry) => entry.id === id) ??
+    (await fetchBlock(queryClient, id));
   if (!block || !parentInfo) return null;
   return buildDeleteChange(block, parentInfo.parent);
 }
