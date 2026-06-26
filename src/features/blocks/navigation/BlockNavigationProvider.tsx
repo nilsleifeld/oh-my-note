@@ -45,6 +45,7 @@ type BlockNavigationContextValue = {
   clearFocusRequest: () => void;
   notifyBlockInputFocus: (blockId: string) => void;
   exitInputMode: () => void;
+  navigateToBlock: (blockId: string) => void;
   selectBlockFromPointer: (
     blockId: string,
     options?: { edit?: boolean; position?: "start" | "end" },
@@ -60,6 +61,10 @@ function isSlashMenuOpen(): boolean {
 
 function isPopoverOpen(): boolean {
   return document.querySelector(".popover--open") !== null;
+}
+
+function isSearchModalOpen(): boolean {
+  return document.querySelector(".search-modal--open") !== null;
 }
 
 const CHORD_PREFIX_TIMEOUT_MS = 1000;
@@ -388,7 +393,8 @@ export function BlockNavigationProvider({ children }: { children: ReactNode }) {
         event.key.toLowerCase() === "r"
       ) {
         if (isBlockEditTarget(target)) return;
-        if (isTextEntryTarget(target) || isPopoverOpen()) return;
+        if (isTextEntryTarget(target) || isPopoverOpen() || isSearchModalOpen())
+          return;
 
         event.preventDefault();
         clearPendingChords();
@@ -406,7 +412,8 @@ export function BlockNavigationProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      if (isTextEntryTarget(target) || isPopoverOpen()) return;
+      if (isTextEntryTarget(target) || isPopoverOpen() || isSearchModalOpen())
+        return;
 
       if (event.key === "Tab") {
         event.preventDefault();
@@ -570,7 +577,8 @@ export function BlockNavigationProvider({ children }: { children: ReactNode }) {
 
       const target = event.target;
       if (!(target instanceof HTMLElement)) return;
-      if (target.closest(".app-header, .app-footer, .popover")) return;
+      if (target.closest(".app-header, .app-footer, .popover, .search-modal"))
+        return;
       if (isTextEntryTarget(target)) return;
 
       const blockId = getBlockIdFromElement(target);
@@ -603,6 +611,7 @@ export function BlockNavigationProvider({ children }: { children: ReactNode }) {
       clearFocusRequest,
       notifyBlockInputFocus,
       exitInputMode,
+      navigateToBlock: selectBlock,
       selectBlockFromPointer,
     }),
     [
@@ -613,6 +622,7 @@ export function BlockNavigationProvider({ children }: { children: ReactNode }) {
       requestFocus,
       inputMode,
       selectedBlockId,
+      selectBlock,
       selectBlockFromPointer,
     ],
   );

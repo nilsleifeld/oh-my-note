@@ -2,6 +2,8 @@ import type {
   ApiClient,
   Block,
   BlockFilter,
+  BlockSearchFilter,
+  BlockSearchPage,
   DayDatesFilter,
   PagedResult,
 } from "../types/models";
@@ -12,6 +14,7 @@ import {
   sortBlocks,
   upsertBlock,
 } from "./blockQueryUtils";
+import { searchBlocksInCorpus } from "./blockSearch";
 import {
   BLOCKS_FILE_NAME,
   createBlocksFilePayload,
@@ -109,6 +112,11 @@ export class FolderApiClient implements ApiClient {
 
     const sorted = [...dates].sort((a, b) => b.localeCompare(a));
     return pageItems(sorted, filter?.page, filter?.pageSize);
+  }
+
+  async searchBlocks(filter?: BlockSearchFilter): Promise<BlockSearchPage> {
+    await this.#ensureReady();
+    return searchBlocksInCorpus(this.#blocks, filter);
   }
 
   async saveBlocks(blocks: Block[]): Promise<void> {

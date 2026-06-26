@@ -1,12 +1,47 @@
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useDayList } from "../features/days/queries/useDayList";
+import { useFeedJumpRegistration } from "../features/search/FeedJumpProvider";
 import { todayISO } from "../utils/date";
 import { DaySection } from "./DaySection";
 import { DaySectionSkeleton } from "./ui/Skeleton";
 
 export function App() {
   const dayList = useDayList();
+  const { registerFeedController } = useFeedJumpRegistration();
   const sentinelRef = useRef<HTMLDivElement>(null);
+  const [extraDays, setExtraDays] = useState<Set<string>>(() => new Set());
+
+  const ensureDayVisible = useCallback(
+    async (day: string) => {
+      setExtraDays((previous) => {
+        if (previous.has(day)) return previous;
+        const next = new Set(previous);
+        next.add(day);
+        return next;
+      });
+
+      let attempts = 0;
+      while (attempts < 100) {
+        const loaded = dayList.data ?? [];
+        if (loaded.includes(day)) break;
+        if (!dayList.hasNextPage) break;
+        await dayList.fetchNextPage();
+        attempts += 1;
+      }
+
+      document
+        .querySelector(`[data-date="${day}"]`)
+        ?.scrollIntoView({ block: "start" });
+
+      await new Promise((resolve) => window.setTimeout(resolve, 150));
+    },
+    [dayList],
+  );
+
+  useEffect(() => {
+    registerFeedController({ ensureDayVisible });
+    return () => registerFeedController(null);
+  }, [ensureDayVisible, registerFeedController]);
 
   useEffect(() => {
     const el = sentinelRef.current;
@@ -27,7 +62,7 @@ export function App() {
   }, [dayList.fetchNextPage, dayList.hasNextPage, dayList.isFetchingNextPage]);
 
   const today = todayISO();
-  const dates = new Set([today, ...(dayList.data ?? [])]);
+  const dates = new Set([today, ...(dayList.data ?? []), ...extraDays]);
   const sorted = [...dates].sort((a, b) => b.localeCompare(a));
 
   return (

@@ -18,4 +18,7 @@ export const queryKeys = {
       pageSize?: number;
     },
   ) => (options ? (["day", date, options] as const) : (["day", date] as const)),
+  search: {
+    blocks: (query: string) => ["search", "blocks", query] as const,
+  },
 };

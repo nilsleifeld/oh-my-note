@@ -67,6 +67,22 @@ export type DayDatesFilter = {
   pageSize?: number;
 };
 
+export type BlockSearchFilter = {
+  query?: string;
+  page?: number;
+  pageSize?: number;
+};
+
+export type BlockSearchHit = {
+  block: Block;
+  indices: readonly [number, number][];
+};
+
+export type BlockSearchPage = PagedResult<BlockSearchHit> & {
+  /** Total searchable blocks in the corpus (independent of the current query). */
+  searchableTotal: number;
+};
+
 export type PagedResult<T> = {
   items: T[];
   total: number;
@@ -79,6 +95,7 @@ export type ApiClient = {
   getBlock(id: string): Promise<Block | undefined>;
   getBlocks(filter?: BlockFilter): Promise<PagedResult<Block>>;
   getDayDates(filter?: DayDatesFilter): Promise<PagedResult<string>>;
+  searchBlocks(filter?: BlockSearchFilter): Promise<BlockSearchPage>;
   saveBlocks(blocks: Block[]): Promise<void>;
   deleteBlocks(ids: string[]): Promise<void>;
 };

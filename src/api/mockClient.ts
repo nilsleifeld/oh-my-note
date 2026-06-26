@@ -2,6 +2,8 @@ import type {
   ApiClient,
   Block,
   BlockFilter,
+  BlockSearchFilter,
+  BlockSearchPage,
   DayDatesFilter,
   PagedResult,
 } from "../types/models";
@@ -13,6 +15,7 @@ import {
   sortBlocks,
   upsertBlock,
 } from "./blockQueryUtils";
+import { searchBlocksInCorpus } from "./blockSearch";
 import { createMockSeedBlocks } from "./mockSeedData";
 
 function randomInt(min: number, max: number): number {
@@ -72,6 +75,11 @@ export class MockApiClient implements ApiClient {
     );
     const sorted = [...dates].sort((a, b) => b.localeCompare(a));
     return pageItems(sorted, filter?.page, filter?.pageSize);
+  }
+
+  async searchBlocks(filter?: BlockSearchFilter): Promise<BlockSearchPage> {
+    await mockDelay();
+    return searchBlocksInCorpus(this.#blocks, filter);
   }
 
   async saveBlocks(blocks: Block[]): Promise<void> {

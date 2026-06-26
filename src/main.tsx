@@ -10,6 +10,9 @@ import { DragProvider } from "./features/blocks/drag/DragProvider";
 import { App } from "./components/App";
 import { AppFooter } from "./components/AppFooter";
 import { AppHeader } from "./components/AppHeader";
+import { SearchModal } from "./components/search/SearchModal";
+import { FeedJumpProvider } from "./features/search/FeedJumpProvider";
+import { SearchModalProvider } from "./features/search/SearchModalProvider";
 import "./css/main.css";
 
 const queryClient = new QueryClient({
@@ -25,11 +28,16 @@ function AppShell() {
   const { appViewClassName } = useViewMode();
 
   return (
-    <div className={appViewClassName}>
-      <AppHeader />
-      <App />
-      <AppFooter />
-    </div>
+    <FeedJumpProvider>
+      <SearchModalProvider>
+        <div className={appViewClassName}>
+          <AppHeader />
+          <App />
+          <AppFooter />
+          <SearchModal />
+        </div>
+      </SearchModalProvider>
+    </FeedJumpProvider>
   );
 }
 

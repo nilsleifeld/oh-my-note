@@ -4,6 +4,25 @@ import { useViewMode, type ViewMode } from "../features/app/ViewModeProvider";
 import { useTheme } from "../features/app/ThemeProvider";
 import { useBlockHistory } from "../features/blocks/history/BlockHistoryProvider";
 import { useNotesFolder } from "../features/folder/FolderProvider";
+import { useSearchModal } from "../features/search/SearchModalProvider";
+
+function SearchIcon() {
+  return (
+    <svg
+      className="app-header__icon"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <circle cx="11" cy="11" r="7" />
+      <path d="m20 20-3.5-3.5" />
+    </svg>
+  );
+}
 
 function UndoIcon() {
   return (
@@ -169,6 +188,7 @@ export function AppHeader() {
   const { isDark, toggleTheme } = useTheme();
   const { canUndo, canRedo, busy, undo, redo } = useBlockHistory();
   const { folderName, closeFolder } = useNotesFolder();
+  const { open: openSearch } = useSearchModal();
   const showFolder = getApiClientKind() === "folder";
 
   useEffect(() => {
@@ -249,6 +269,17 @@ export function AppHeader() {
               </button>
             </div>
           ) : null}
+          <div className="app-header__search">
+            <button
+              type="button"
+              className="app-header__action"
+              title="Search (⌘K)"
+              aria-label="Search"
+              onClick={openSearch}
+            >
+              <SearchIcon />
+            </button>
+          </div>
           <div className="app-header__actions">
             <button
               type="button"

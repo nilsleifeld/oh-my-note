@@ -545,3 +545,60 @@ export async function pressVimNavKey(
 ) {
   await page.keyboard.press(key);
 }
+
+export function searchModal(page: Page): Locator {
+  return page.locator(".search-modal--open");
+}
+
+export async function expectSearchClosed(page: Page) {
+  await expect(page.locator(".search-modal--open")).toHaveCount(0);
+}
+
+export async function openSearch(page: Page) {
+  await page.getByRole("button", { name: "Search", exact: true }).click();
+  await expect(searchModal(page)).toBeVisible();
+}
+
+export async function openSearchWithShortcut(page: Page) {
+  const modifier = process.platform === "darwin" ? "Meta" : "Control";
+  await page.keyboard.press(`${modifier}+KeyK`);
+  await expect(searchModal(page)).toBeVisible();
+}
+
+export function searchInput(page: Page): Locator {
+  return searchModal(page).getByRole("searchbox", { name: "Search blocks" });
+}
+
+export function searchResults(page: Page): Locator {
+  return searchModal(page).locator(
+    ".search-modal__results .search-modal__option",
+  );
+}
+
+export function highlightedSearchResult(page: Page): Locator {
+  return searchModal(page).locator(".search-modal__option--highlighted");
+}
+
+export function searchPreview(page: Page): Locator {
+  return searchModal(page).locator(".search-modal__preview-body");
+}
+
+export function searchCount(page: Page): Locator {
+  return searchModal(page).locator(".search-modal__count");
+}
+
+export async function fillSearch(page: Page, query: string) {
+  await searchInput(page).fill(query);
+}
+
+export async function enterSearchNormalMode(page: Page) {
+  await searchInput(page).press("Escape");
+  await expect(searchModal(page)).toBeVisible();
+  await searchModal(page).locator(".search-modal__panel").focus();
+}
+
+export async function closeSearch(page: Page) {
+  await searchModal(page).locator(".search-modal__panel").focus();
+  await page.keyboard.press("Escape");
+  await expectSearchClosed(page);
+}
