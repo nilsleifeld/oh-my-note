@@ -39,7 +39,7 @@
   .block__comments-empty {
     margin: 0;
     font-size: var(--text-sm);
-    color: var(--ln-muted-foreground);
+    color: hsl(var(--muted-foreground));
   }
 
   .block__comments-item {
@@ -68,7 +68,7 @@
     left: 50%;
     width: 1px;
     transform: translateX(-50%);
-    background: var(--ln-border);
+    background: hsl(var(--border));
   }
 
   .block__comments-item:last-child .block__comments-marker::after {
@@ -80,15 +80,15 @@
     z-index: 1;
     width: calc(var(--spacing) * 2);
     height: calc(var(--spacing) * 2);
-    border: 2px solid var(--ln-border);
+    border: 2px solid hsl(var(--border));
     border-radius: 999px;
-    background: var(--ln-background);
+    background: hsl(var(--background));
     box-sizing: border-box;
   }
 
   .block__comments-item:first-child .block__comments-dot {
-    border-color: var(--ln-foreground);
-    background: var(--ln-foreground);
+    border-color: hsl(var(--foreground));
+    background: hsl(var(--foreground));
   }
 
   .block__comments-body {
@@ -116,7 +116,7 @@
     border: none;
     border-radius: var(--radius);
     background: transparent;
-    color: var(--ln-muted-foreground);
+    color: hsl(var(--muted-foreground));
     opacity: 0;
     cursor: pointer;
     transition:
@@ -132,8 +132,8 @@
 
   .block__comments-item-delete:hover,
   .block__comments-item-delete:focus-visible {
-    background: var(--ln-accent);
-    color: var(--ln-destructive);
+    background: hsl(var(--accent));
+    color: hsl(var(--destructive));
     outline: none;
   }
 
@@ -145,7 +145,7 @@
   .block__comments-item-date {
     font-size: var(--text-xs);
     line-height: 1.2;
-    color: var(--ln-muted-foreground);
+    color: hsl(var(--muted-foreground));
   }
 
   .block__comments-item-text {
@@ -156,7 +156,7 @@
     font: inherit;
     font-size: var(--text-sm);
     line-height: 1.5;
-    color: var(--ln-foreground);
+    color: hsl(var(--foreground));
     text-align: left;
     white-space: pre-wrap;
     word-break: break-word;
@@ -164,25 +164,25 @@
   }
 
   .block__comments-item-text:hover {
-    color: var(--ln-foreground);
+    color: hsl(var(--foreground));
   }
 
   .block__comments-item-input {
     width: 100%;
     min-height: calc(var(--spacing) * 8);
     padding: calc(var(--spacing) * 1);
-    border: 1px solid var(--ln-border);
+    border: 1px solid hsl(var(--border));
     border-radius: var(--radius);
-    background: var(--ln-background);
+    background: hsl(var(--background));
     font: inherit;
     font-size: var(--text-sm);
     line-height: 1.5;
-    color: var(--ln-foreground);
+    color: hsl(var(--foreground));
     resize: vertical;
   }
 
   .block__comments-item-input:focus {
-    outline: 1px solid var(--ln-border);
+    outline: 1px solid hsl(var(--border));
     outline-offset: calc(var(--spacing) * -0.5);
   }
 
@@ -191,8 +191,8 @@
     align-items: center;
     gap: calc(var(--spacing) * 1.5);
     padding: calc(var(--spacing) * 2) calc(var(--spacing) * 3);
-    border-top: 1px solid var(--ln-border);
-    background: var(--ln-background);
+    border-top: 1px solid hsl(var(--border));
+    background: hsl(var(--background));
   }
 
   .block__comments-thread:not(:has(.block__comments-list))
@@ -206,23 +206,23 @@
     min-height: calc(var(--spacing) * 8);
     max-height: calc(var(--spacing) * 24);
     padding: calc(var(--spacing) * 1.5);
-    border: 1px solid var(--ln-border);
+    border: 1px solid hsl(var(--border));
     border-radius: var(--radius);
-    background: var(--ln-background);
+    background: hsl(var(--background));
     font: inherit;
     font-size: var(--text-sm);
     line-height: 1.5;
-    color: var(--ln-foreground);
+    color: hsl(var(--foreground));
     resize: none;
   }
 
   .block__comments-reply:focus {
-    outline: 1px solid var(--ln-border);
+    outline: 1px solid hsl(var(--border));
     outline-offset: calc(var(--spacing) * -0.5);
   }
 
   .block__comments-reply::placeholder {
-    color: var(--ln-muted-foreground);
+    color: hsl(var(--muted-foreground));
   }
 
   .block__comments-submit {
@@ -235,8 +235,8 @@
     padding: 0;
     border: none;
     border-radius: 999px;
-    background: var(--ln-foreground);
-    color: var(--ln-background);
+    background: hsl(var(--foreground));
+    color: hsl(var(--background));
     cursor: pointer;
     transition: opacity 0.15s ease;
   }

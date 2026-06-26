@@ -49,28 +49,13 @@
   --spacing: 0.25rem;
 
   --radius: 0.5rem;
-  --radius-sm: calc(var(--ln-radius) * 0.6);
-  --radius-md: calc(var(--ln-radius) * 0.8);
-  --radius-lg: var(--ln-radius);
-  --radius-xl: calc(var(--ln-radius) * 1.4);
-  --radius-2xl: calc(var(--ln-radius) * 1.8);
-  --radius-3xl: calc(var(--ln-radius) * 2.2);
-  --radius-4xl: calc(var(--ln-radius) * 2.6);
-
-  --ln-background: hsl(var(--background));
-  --ln-foreground: hsl(var(--foreground));
-  --ln-muted: hsl(var(--muted));
-  --ln-muted-foreground: hsl(var(--muted-foreground));
-  --ln-primary: hsl(var(--primary));
-  --ln-primary-foreground: hsl(var(--primary-foreground));
-  --ln-secondary: hsl(var(--secondary));
-  --ln-secondary-foreground: hsl(var(--secondary-foreground));
-  --ln-accent: hsl(var(--accent));
-  --ln-accent-foreground: hsl(var(--accent-foreground));
-  --ln-destructive: hsl(var(--destructive));
-  --ln-destructive-foreground: hsl(var(--destructive-foreground));
-  --ln-border: hsl(var(--border));
-  --ln-radius: var(--radius);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
 
   --code-keyword: 222.2 47.4% 40%;
   --code-string: 142 45% 32%;
@@ -82,17 +67,6 @@
   --code-meta: 215.4 16.3% 46.9%;
   --code-attr: 25 75% 42%;
   --code-selection: hsl(var(--accent));
-
-  --ln-code-keyword: hsl(var(--code-keyword));
-  --ln-code-string: hsl(var(--code-string));
-  --ln-code-comment: hsl(var(--code-comment));
-  --ln-code-number: hsl(var(--code-number));
-  --ln-code-function: hsl(var(--code-function));
-  --ln-code-variable: hsl(var(--code-variable));
-  --ln-code-type: hsl(var(--code-type));
-  --ln-code-meta: hsl(var(--code-meta));
-  --ln-code-attr: hsl(var(--code-attr));
-  --ln-code-selection: var(--code-selection);
 
   color-scheme: light;
 }

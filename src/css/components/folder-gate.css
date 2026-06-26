@@ -6,7 +6,7 @@
     justify-content: center;
     min-height: 100%;
     padding: calc(var(--spacing) * 6);
-    background: var(--ln-background);
+    background: hsl(var(--background));
   }
 
   .folder-gate__card {
@@ -17,7 +17,7 @@
     width: min(100%, calc(var(--spacing) * 110));
     padding: calc(var(--spacing) * 12) calc(var(--spacing) * 10);
     border-radius: var(--radius-xl);
-    background: var(--ln-background);
+    background: hsl(var(--background));
     text-align: center;
   }
 
@@ -28,8 +28,8 @@
     width: calc(var(--spacing) * 14);
     height: calc(var(--spacing) * 14);
     border-radius: var(--radius-lg);
-    background: var(--ln-muted);
-    color: var(--ln-muted-foreground);
+    background: hsl(var(--muted));
+    color: hsl(var(--muted-foreground));
   }
 
   .folder-gate__badge .folder-gate__icon {
@@ -50,7 +50,7 @@
     line-height: var(--text-2xl--line-height);
     font-weight: 600;
     letter-spacing: -0.01em;
-    color: var(--ln-foreground);
+    color: hsl(var(--foreground));
   }
 
   .folder-gate__text {
@@ -58,11 +58,11 @@
     max-width: 36ch;
     font-size: var(--text-sm);
     line-height: var(--text-sm--line-height);
-    color: var(--ln-muted-foreground);
+    color: hsl(var(--muted-foreground));
   }
 
   .folder-gate__text--error {
-    color: var(--ln-destructive);
+    color: hsl(var(--destructive));
   }
 
   .folder-gate__hint {
@@ -74,12 +74,12 @@
     margin-top: calc(var(--spacing) * 2);
     padding: calc(var(--spacing) * 4);
     border-radius: var(--radius-md);
-    background: var(--ln-muted);
+    background: hsl(var(--muted));
     text-align: left;
   }
 
   .folder-gate__hint--warning {
-    background: color-mix(in srgb, var(--ln-destructive) 8%, var(--ln-muted));
+    background: color-mix(in srgb, hsl(var(--destructive)) 8%, hsl(var(--muted)));
   }
 
   .folder-gate__hint-title {
@@ -87,14 +87,14 @@
     font-size: var(--text-sm);
     line-height: var(--text-sm--line-height);
     font-weight: 600;
-    color: var(--ln-foreground);
+    color: hsl(var(--foreground));
   }
 
   .folder-gate__hint-text {
     margin: 0;
     font-size: var(--text-sm);
     line-height: var(--text-sm--line-height);
-    color: var(--ln-muted-foreground);
+    color: hsl(var(--muted-foreground));
   }
 
   .folder-gate__steps {
@@ -102,7 +102,7 @@
     padding-left: calc(var(--spacing) * 5);
     font-size: var(--text-sm);
     line-height: var(--text-sm--line-height);
-    color: var(--ln-muted-foreground);
+    color: hsl(var(--muted-foreground));
   }
 
   .folder-gate__steps li + li {
@@ -111,7 +111,7 @@
 
   .folder-gate__steps strong {
     font-weight: 600;
-    color: var(--ln-foreground);
+    color: hsl(var(--foreground));
   }
 
   .folder-gate__button {
@@ -122,11 +122,11 @@
     padding: calc(var(--spacing) * 2.5) calc(var(--spacing) * 5);
     border: none;
     border-radius: var(--radius-md);
-    background: var(--ln-primary);
+    background: hsl(var(--primary));
     font-size: var(--text-sm);
     line-height: var(--text-sm--line-height);
     font-weight: 500;
-    color: var(--ln-primary-foreground);
+    color: hsl(var(--primary-foreground));
     cursor: pointer;
     transition:
       opacity 0.15s ease,
@@ -147,7 +147,7 @@
   }
 
   .folder-gate__button:focus-visible {
-    outline: 2px solid var(--ln-foreground);
+    outline: 2px solid hsl(var(--foreground));
     outline-offset: 2px;
   }
 }

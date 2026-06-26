@@ -12,9 +12,9 @@
     z-index: 20;
     min-width: calc(var(--spacing) * 32);
     overflow: hidden;
-    border: 1px solid var(--ln-border);
+    border: 1px solid hsl(var(--border));
     border-radius: var(--radius);
-    background: var(--ln-background);
+    background: hsl(var(--background));
     box-shadow:
       0 calc(var(--spacing) * 1) calc(var(--spacing) * 3)
         hsl(var(--foreground) / 0.08),

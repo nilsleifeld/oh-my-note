@@ -3,7 +3,7 @@
     flex: 1;
     min-height: 0;
     overflow-y: auto;
-    background: var(--ln-background);
+    background: hsl(var(--background));
   }
 
   .feed__status {
@@ -11,11 +11,11 @@
     margin: 0 auto;
     padding: calc(var(--spacing) * 16) calc(var(--spacing) * 12);
     font-size: var(--text-sm);
-    color: var(--ln-muted-foreground);
+    color: hsl(var(--muted-foreground));
   }
 
   .feed__status--error {
-    color: var(--ln-destructive);
+    color: hsl(var(--destructive));
   }
 
   .feed__sentinel {

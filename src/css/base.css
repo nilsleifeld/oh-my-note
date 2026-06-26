@@ -1,7 +1,7 @@
 @layer base {
   * {
-    border-color: var(--ln-border);
-    outline-color: rgba(var(--ln-ring), 0.5);
+    border-color: hsl(var(--border));
+    outline-color: hsl(var(--foreground) / 0.5);
   }
 
   html {
@@ -16,7 +16,7 @@
       "Apple Color Emoji",
       "Segoe UI Emoji",
       sans-serif;
-    background-color: var(--ln-background);
-    color: var(--ln-foreground);
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
   }
 }

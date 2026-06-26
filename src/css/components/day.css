@@ -15,7 +15,7 @@
     margin: 0 auto;
     padding: calc(var(--spacing) * 12) calc(var(--spacing) * 12);
     font-size: var(--text-sm);
-    color: var(--ln-muted-foreground);
+    color: hsl(var(--muted-foreground));
   }
 
   .day__error {
@@ -23,7 +23,7 @@
     margin: 0 auto;
     padding: calc(var(--spacing) * 12) calc(var(--spacing) * 12);
     font-size: var(--text-sm);
-    color: var(--ln-destructive);
+    color: hsl(var(--destructive));
   }
 
   .day__header {
@@ -35,7 +35,7 @@
     justify-content: center;
     margin-bottom: calc(var(--spacing) * 8);
     padding-block: calc(var(--spacing) * 1);
-    background: var(--ln-background);
+    background: hsl(var(--background));
   }
 
   .day__header-line {
@@ -48,13 +48,13 @@
   .day__divider {
     flex: 1;
     height: 1px;
-    background: var(--ln-border);
+    background: hsl(var(--border));
   }
 
   .day__date {
     flex-shrink: 0;
     font-size: var(--text-sm);
-    color: var(--ln-muted-foreground);
+    color: hsl(var(--muted-foreground));
   }
 
   .day__blocks {
@@ -81,7 +81,7 @@
   }
 
   .day__empty .block__row {
-    color: var(--ln-muted-foreground);
+    color: hsl(var(--muted-foreground));
   }
 
   .day__empty__icon {
@@ -117,7 +117,7 @@
   }
 
   .day__empty:focus-visible .block__row {
-    background: var(--ln-accent);
+    background: hsl(var(--accent));
     outline: none;
   }
 }

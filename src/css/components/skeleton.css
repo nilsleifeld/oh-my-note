@@ -1,7 +1,7 @@
 @layer components {
   .skeleton {
     border-radius: var(--radius);
-    background: var(--ln-muted);
+    background: hsl(var(--muted));
     animation: skeleton-pulse 1.5s ease-in-out infinite;
   }
 

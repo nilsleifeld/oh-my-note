@@ -33,26 +33,26 @@
 
   .block__code-highlight .hljs {
     background: transparent;
-    color: var(--ln-foreground);
+    color: hsl(var(--foreground));
   }
 
   .block__code-editor .block__input--code {
     position: relative;
     z-index: 1;
     color: transparent;
-    caret-color: var(--ln-foreground);
+    caret-color: hsl(var(--foreground));
     -webkit-text-fill-color: transparent;
   }
 
   .block__code-editor .block__input--code::selection {
-    background: var(--ln-code-selection);
+    background: var(--code-selection);
     color: transparent;
     -webkit-text-fill-color: transparent;
   }
 
   .hljs-comment,
   .hljs-quote {
-    color: var(--ln-code-comment);
+    color: hsl(var(--code-comment));
   }
 
   .hljs-keyword,
@@ -60,53 +60,53 @@
   .hljs-literal,
   .hljs-section,
   .hljs-link {
-    color: var(--ln-code-keyword);
+    color: hsl(var(--code-keyword));
   }
 
   .hljs-string,
   .hljs-regexp,
   .hljs-addition,
   .hljs-attribute {
-    color: var(--ln-code-string);
+    color: hsl(var(--code-string));
   }
 
   .hljs-number,
   .hljs-symbol,
   .hljs-bullet {
-    color: var(--ln-code-number);
+    color: hsl(var(--code-number));
   }
 
   .hljs-title,
   .hljs-title.class_,
   .hljs-title.function_,
   .hljs-function .hljs-title {
-    color: var(--ln-code-function);
+    color: hsl(var(--code-function));
   }
 
   .hljs-variable,
   .hljs-template-variable,
   .hljs-params {
-    color: var(--ln-code-variable);
+    color: hsl(var(--code-variable));
   }
 
   .hljs-type,
   .hljs-built_in,
   .hljs-class .hljs-title {
-    color: var(--ln-code-type);
+    color: hsl(var(--code-type));
   }
 
   .hljs-meta,
   .hljs-meta .hljs-keyword {
-    color: var(--ln-code-meta);
+    color: hsl(var(--code-meta));
   }
 
   .hljs-name,
   .hljs-tag,
   .hljs-attr {
-    color: var(--ln-code-attr);
+    color: hsl(var(--code-attr));
   }
 
   .hljs-deletion {
-    color: var(--ln-destructive);
+    color: hsl(var(--destructive));
   }
 }
