@@ -4,6 +4,7 @@ import type { BlockChange, BlockType } from "../../types/models";
 import {
   buildBulletShortcutChange,
   buildHeadingShortcutChange,
+  buildOrderedShortcutChange,
   buildTodoShortcutChange,
   buildToggleShortcutChange,
 } from "./changes/buildBlockChanges";
@@ -11,6 +12,13 @@ import { getBlock } from "./cache/blockCache";
 import { useApplyBlockMutation } from "./mutations/useApplyBlockMutation";
 
 const headingShortcutPattern = /^(#{1,5}) (.*)$/;
+const orderedShortcutPattern = /^(\d+)\. (.*)$/;
+
+export function parseOrderedShortcut(value: string): { title: string } | null {
+  const match = value.match(orderedShortcutPattern);
+  if (!match) return null;
+  return { title: match[2] };
+}
 
 function parseHeadingShortcut(value: string): {
   type: Extract<BlockType, "h1" | "h2" | "h3" | "h4" | "h5">;
@@ -66,6 +74,14 @@ export function useBlockTitleShortcuts(
           applyShortcut(buildToggleShortcutChange(current, title));
         }
         return title;
+      }
+      const ordered = parseOrderedShortcut(value);
+      if (ordered) {
+        const current = getBlock(queryClient, blockId);
+        if (current) {
+          applyShortcut(buildOrderedShortcutChange(current, ordered.title));
+        }
+        return ordered.title;
       }
       const headingShortcut = parseHeadingShortcut(value);
       if (headingShortcut) {

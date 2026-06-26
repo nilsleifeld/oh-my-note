@@ -79,7 +79,11 @@
   }
 
   .folder-gate__hint--warning {
-    background: color-mix(in srgb, hsl(var(--destructive)) 8%, hsl(var(--muted)));
+    background: color-mix(
+      in srgb,
+      hsl(var(--destructive)) 8%,
+      hsl(var(--muted))
+    );
   }
 
   .folder-gate__hint-title {

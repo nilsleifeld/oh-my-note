@@ -1,7 +1,7 @@
 import type { BlockRowProps } from "../../types/ui";
 import { useBlockNavigation } from "../../features/blocks/navigation/BlockNavigationProvider";
 import { isHeadingBlockType } from "../../data/blocks";
-import { childBlockIds } from "../../utils/blockTree";
+import { childBlockIds, orderedListIndex } from "../../utils/blockTree";
 import { useBlockQuery } from "../../features/blocks/queries/useBlockQuery";
 import { useDeleteBlock } from "../../features/blocks/mutations/useDeleteBlock";
 import { BlockHandle, BlockTypeSelect } from "./BlockHandle";
@@ -11,6 +11,7 @@ import { CodeBlock } from "./CodeBlock";
 import { HeadingBlock } from "./HeadingBlock";
 import { ImageBlock } from "./ImageBlock";
 import { BulletBlock } from "./BulletBlock";
+import { OrderedBlock } from "./OrderedBlock";
 import { TextBlock } from "./TextBlock";
 import { TodoBlock } from "./TodoBlock";
 import { ToggleBlock } from "./ToggleBlock";
@@ -101,6 +102,12 @@ export function BlockRow({
           />
           {block.type === "text" ? <TextBlock {...contentProps} /> : null}
           {block.type === "bullet" ? <BulletBlock {...contentProps} /> : null}
+          {block.type === "ordered" ? (
+            <OrderedBlock
+              {...contentProps}
+              listIndex={orderedListIndex(blockId, dayBlocks, date)}
+            />
+          ) : null}
           {block.type === "todo" ? <TodoBlock {...contentProps} /> : null}
           {block.type === "toggle" ? <ToggleBlock {...contentProps} /> : null}
           {block.type === "code" ? <CodeBlock {...contentProps} /> : null}

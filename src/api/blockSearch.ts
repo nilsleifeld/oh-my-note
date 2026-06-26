@@ -18,6 +18,7 @@ type SearchableBlockDoc = {
 const SEARCHABLE_TYPES = new Set<BlockType>([
   "text",
   "bullet",
+  "ordered",
   "todo",
   "toggle",
   "code",

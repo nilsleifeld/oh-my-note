@@ -3,7 +3,7 @@ import type { Block } from "../../types/models";
 import { blockTypeOptions } from "../../data/blocks";
 import { isHeadingBlockType } from "../../data/blocks";
 import { useSearchDayPreview } from "../../features/search/useSearchDayPreview";
-import { childBlockIds } from "../../utils/blockTree";
+import { childBlockIds, orderedListIndex } from "../../utils/blockTree";
 import { formatDayTitle } from "../../utils/date";
 import { highlightMatches } from "../../utils/highlightMatches";
 
@@ -74,6 +74,11 @@ function PreviewBlockRow({
           {block.type === "bullet" ? (
             <span className="block__bullet" aria-hidden="true">
               •
+            </span>
+          ) : null}
+          {block.type === "ordered" ? (
+            <span className="block__ordered" aria-hidden="true">
+              {orderedListIndex(block.id, blocks, day)}.
             </span>
           ) : null}
           {block.type === "todo" ? (

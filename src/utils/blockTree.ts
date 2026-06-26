@@ -71,6 +71,34 @@ export function findParentInContext(
   return findParentInfo(blockId, blocks, day);
 }
 
+export function orderedListIndex(
+  blockId: string,
+  blocks: Block[],
+  day: string,
+): number {
+  const parentInfo = findParentInfo(blockId, blocks, day);
+  if (!parentInfo) return 1;
+
+  const siblings =
+    parentInfo.parent === null
+      ? childrenOf(blocks, null, day)
+      : childrenOf(blocks, parentInfo.parent.id);
+
+  let counter = 0;
+  for (const sibling of siblings) {
+    if (sibling.type === "ordered") {
+      counter++;
+      if (sibling.id === blockId) {
+        return counter;
+      }
+    } else {
+      counter = 0;
+    }
+  }
+
+  return 1;
+}
+
 export function isDescendant(
   ancestorId: string,
   blockId: string,

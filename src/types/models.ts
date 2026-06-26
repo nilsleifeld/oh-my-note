@@ -4,6 +4,7 @@ export type BlockType =
   | "todo"
   | "text"
   | "bullet"
+  | "ordered"
   | "code"
   | "image"
   | "toggle"

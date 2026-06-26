@@ -85,6 +85,15 @@ test.describe("Block-Erstellung", () => {
     await expect(blocks(page, "h5")).toHaveCount(1);
   });
 
+  test("erstellt Numbered-list-Block", async ({ page }) => {
+    await addBlock(page, "ordered");
+
+    await expect(blocks(page, "ordered")).toHaveCount(1);
+    await expect(
+      blocks(page, "ordered").first().locator(".block__ordered"),
+    ).toHaveText("1.");
+  });
+
   test("zeigt leeren Zustand wenn keine Blöcke vorhanden sind", async ({
     page,
   }) => {
@@ -263,6 +272,70 @@ test.describe("Block-Typ wechseln", () => {
     ).toBeVisible();
   });
 
+  test('"1. " wandelt Textblock in Numbered list um', async ({ page }) => {
+    const block = blocks(page, "text").first();
+    const input = blockInput(block);
+    await input.click();
+    await input.pressSequentially("1. ", { delay: 50 });
+
+    await expect(blocks(page, "text")).toHaveCount(0);
+    await expect(blocks(page, "ordered")).toHaveCount(1);
+    await expect(blockInput(blocks(page, "ordered").first())).toHaveValue("");
+    await expect(
+      blocks(page, "ordered").first().locator(".block__ordered"),
+    ).toHaveText("1.");
+  });
+
+  test('"2. " wandelt Textblock in Numbered list um', async ({ page }) => {
+    const block = blocks(page, "text").first();
+    const input = blockInput(block);
+    await input.click();
+    await input.pressSequentially("2. ", { delay: 50 });
+
+    await expect(blocks(page, "text")).toHaveCount(0);
+    await expect(blocks(page, "ordered")).toHaveCount(1);
+    await expect(
+      blocks(page, "ordered").first().locator(".block__ordered"),
+    ).toHaveText("1.");
+  });
+
+  test('"1. Punkt" wandelt Textblock in Numbered list mit Titel um', async ({
+    page,
+  }) => {
+    const block = blocks(page, "text").first();
+    const input = blockInput(block);
+    await input.click();
+    await input.pressSequentially("1. Punkt", { delay: 50 });
+
+    await expect(blocks(page, "text")).toHaveCount(0);
+    await expect(blocks(page, "ordered")).toHaveCount(1);
+    await expect(blockInput(blocks(page, "ordered").first())).toHaveValue(
+      "Punkt",
+    );
+  });
+
+  test("Backspace am Zeilenanfang wandelt Numbered list in Text um", async ({
+    page,
+  }) => {
+    const block = blocks(page, "text").first();
+    await changeBlockType(block, "ordered");
+    await fillBlock(blocks(page, "ordered").first(), "Listenpunkt");
+
+    const input = blockInput(blocks(page, "ordered").first());
+    await input.click();
+    await input.press("Home");
+    await input.press("Backspace");
+
+    await expect(blocks(page, "ordered")).toHaveCount(0);
+    await expect(blocks(page, "text")).toHaveCount(1);
+    await expect(blockInput(blocks(page, "text").first())).toHaveValue(
+      "Listenpunkt",
+    );
+    await expect(
+      blocks(page, "text").first().locator(".block__ordered"),
+    ).toHaveCount(0);
+  });
+
   test("Backspace am Zeilenanfang wandelt To-do in Text um", async ({
     page,
   }) => {
@@ -408,6 +481,20 @@ test.describe("Block-Typ wechseln", () => {
     await expect(bulletInput).toHaveValue("Listenpunkt");
   });
 
+  test("Numbered-list-Shortcut behält Fokus und erlaubt weiteres Tippen", async ({
+    page,
+  }) => {
+    const block = blocks(page, "text").first();
+    const input = blockInput(block);
+    await input.click();
+    await input.pressSequentially("1. ", { delay: 50 });
+
+    const orderedInput = blockInput(blocks(page, "ordered").first());
+    await expect(orderedInput).toBeFocused();
+    await page.keyboard.type("Listenpunkt");
+    await expect(orderedInput).toHaveValue("Listenpunkt");
+  });
+
   test.describe("Shortcuts aus jedem Block-Typ", () => {
     async function typeShortcut(
       block: ReturnType<typeof blocks>,
@@ -436,6 +523,20 @@ test.describe("Block-Typ wechseln", () => {
       await expect(
         blocks(page, "bullet").first().locator(".block__bullet"),
       ).toBeVisible();
+    });
+
+    test('"1. " wandelt To-do in Numbered list um', async ({ page }) => {
+      await addBlock(page, "todo");
+      const input = blockInput(blocks(page, "todo").first());
+      await input.click();
+      await input.pressSequentially("1. ", { delay: 50 });
+
+      await expect(blocks(page, "todo")).toHaveCount(0);
+      await expect(blocks(page, "ordered")).toHaveCount(1);
+      await expect(blockInput(blocks(page, "ordered").first())).toHaveValue("");
+      await expect(
+        blocks(page, "ordered").first().locator(".block__ordered"),
+      ).toHaveText("1.");
     });
 
     test('"[] " wandelt Bullet in To-do um', async ({ page }) => {
@@ -708,6 +809,25 @@ test.describe("Tastatur-Interaktionen", () => {
 
     await expect(blocks(page, "todo")).toHaveCount(2);
     const newBlock = blocks(page, "todo").nth(1);
+    await expect(blockInput(newBlock)).toHaveValue("");
+    await expect(blockInput(newBlock)).toBeFocused();
+  });
+
+  test("Enter im Numbered-list-Input erstellt nummerierte Liste darunter", async ({
+    page,
+  }) => {
+    await addBlock(page, "ordered");
+    const ordered = blocks(page, "ordered").first();
+    await typeInBlockAndPress(ordered, "Erster Punkt", "Enter");
+
+    await expect(blocks(page, "ordered")).toHaveCount(2);
+    await expect(
+      blocks(page, "ordered").first().locator(".block__ordered"),
+    ).toHaveText("1.");
+    await expect(
+      blocks(page, "ordered").nth(1).locator(".block__ordered"),
+    ).toHaveText("2.");
+    const newBlock = blocks(page, "ordered").nth(1);
     await expect(blockInput(newBlock)).toHaveValue("");
     await expect(blockInput(newBlock)).toBeFocused();
   });
@@ -1316,7 +1436,7 @@ test.describe("Slash-Befehl", () => {
 
     const menu = blockSlashMenu(block);
     await expect(menu).toBeVisible();
-    await expect(menu.locator(".block-slash-menu__option")).toHaveCount(11);
+    await expect(menu.locator(".block-slash-menu__option")).toHaveCount(12);
     await expect(menu.getByRole("option", { name: "Text" })).toHaveAttribute(
       "aria-disabled",
       "true",
@@ -1338,6 +1458,19 @@ test.describe("Slash-Befehl", () => {
     await expect(menu).toBeVisible();
     await expect(menu.locator(".block-slash-menu__option")).toHaveCount(1);
     await expect(menu.getByRole("option", { name: "Bullet" })).toBeVisible();
+  });
+
+  test("filtert Numbered list beim Slash-Befehl /num", async ({ page }) => {
+    await addBlock(page, "text");
+    const block = blocks(page, "text").first();
+    await typeSlashInBlock(block, "/num");
+
+    const menu = blockSlashMenu(block);
+    await expect(menu).toBeVisible();
+    await expect(menu.locator(".block-slash-menu__option")).toHaveCount(1);
+    await expect(
+      menu.getByRole("option", { name: "Numbered list" }),
+    ).toBeVisible();
   });
 
   test("übernimmt Typ per Enter auf ausgewählter Option", async ({ page }) => {

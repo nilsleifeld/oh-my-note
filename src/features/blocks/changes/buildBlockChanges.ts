@@ -84,6 +84,20 @@ export function buildBulletShortcutChange(
   return { snapshot: [snapshot], updates: [update] };
 }
 
+export function buildOrderedShortcutChange(
+  block: Block,
+  title: string,
+): BlockChange {
+  const snapshot = cloneBlock(block);
+  const update = {
+    ...cloneBlock(block),
+    type: "ordered" as const,
+    properties: { ...block.properties, title },
+  };
+
+  return { snapshot: [snapshot], updates: [update] };
+}
+
 export function buildTodoShortcutChange(
   block: Block,
   title: string,

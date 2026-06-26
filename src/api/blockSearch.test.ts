@@ -30,13 +30,17 @@ describe("searchBlocksInCorpus", () => {
       ...textBlock("img", "", "2024-06-02"),
       type: "image" as const,
     },
+    {
+      ...textBlock("ord", "Numbered item", "2024-06-02"),
+      type: "ordered" as const,
+    },
   ];
 
   it("returns browse results when query is empty", () => {
     const page = searchBlocksInCorpus(blocks, { query: "" });
 
-    expect(page.searchableTotal).toBe(3);
-    expect(page.items).toHaveLength(3);
+    expect(page.searchableTotal).toBe(4);
+    expect(page.items).toHaveLength(4);
     expect(page.items[0]?.block.id).toBe("a");
     expect(page.items[0]?.indices).toEqual([]);
   });
@@ -44,7 +48,7 @@ describe("searchBlocksInCorpus", () => {
   it("fuzzy-matches titles and returns highlight indices", () => {
     const page = searchBlocksInCorpus(blocks, { query: "meetng" });
 
-    expect(page.searchableTotal).toBe(3);
+    expect(page.searchableTotal).toBe(4);
     expect(page.items).toHaveLength(1);
     expect(page.items[0]?.block.id).toBe("a");
     expect(page.items[0]?.indices.length).toBeGreaterThan(0);
@@ -58,7 +62,14 @@ describe("searchBlocksInCorpus", () => {
     });
 
     expect(page.items).toHaveLength(1);
-    expect(page.total).toBe(3);
+    expect(page.total).toBe(4);
     expect(page.hasMore).toBe(true);
+  });
+
+  it("includes ordered blocks in searchable corpus", () => {
+    const page = searchBlocksInCorpus(blocks, { query: "Numbered" });
+
+    expect(page.items).toHaveLength(1);
+    expect(page.items[0]?.block.type).toBe("ordered");
   });
 });

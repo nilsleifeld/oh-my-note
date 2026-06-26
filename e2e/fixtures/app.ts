@@ -29,6 +29,7 @@ const SENTINEL_BLOCKS = [
 export type BlockType =
   | "text"
   | "bullet"
+  | "ordered"
   | "todo"
   | "toggle"
   | "code"
@@ -295,6 +296,7 @@ export async function changeBlockType(block: Locator, type: BlockType) {
     h5: "Heading 5",
     text: "Text",
     bullet: "Bullet",
+    ordered: "Numbered list",
     todo: "To-do",
     toggle: "Toggle",
     code: "Code",

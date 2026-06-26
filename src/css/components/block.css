@@ -266,6 +266,7 @@
   .block__marker,
   .block__toggle,
   .block__bullet,
+  .block__ordered,
   .block__marker--checkbox {
     flex-shrink: 0;
     display: flex;
@@ -329,6 +330,13 @@
     display: block;
     width: var(--block-bullet-size);
     height: var(--block-bullet-size);
+  }
+
+  .block__ordered {
+    color: hsl(var(--foreground));
+    font-variant-numeric: tabular-nums;
+    user-select: none;
+    pointer-events: none;
   }
 
   .block__input {

@@ -15,6 +15,7 @@ export const blockTypeOptions: SelectOption[] = [
   { value: "h5", label: "Heading 5" },
   { value: "text", label: "Text" },
   { value: "bullet", label: "Bullet" },
+  { value: "ordered", label: "Numbered list" },
   { value: "todo", label: "To-do" },
   { value: "toggle", label: "Toggle" },
   { value: "code", label: "Code" },

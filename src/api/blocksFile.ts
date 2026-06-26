@@ -13,6 +13,7 @@ const BLOCK_TYPES = new Set<BlockType>([
   "todo",
   "text",
   "bullet",
+  "ordered",
   "code",
   "image",
   "toggle",
