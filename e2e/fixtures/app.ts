@@ -139,13 +139,22 @@ export function daySection(page: Page, date: string): Locator {
 
 /** Scrolls to a lazily loaded day and waits until its blocks are ready. */
 export async function ensureDaySectionLoaded(page: Page, date: string) {
-  await expect(daySection(page, date)).toBeAttached();
+  await expect(async () => {
+    await expect(daySection(page, date)).toBeAttached();
+  }).toPass();
 
   await expect(async () => {
     await daySection(page, date).scrollIntoViewIfNeeded();
   }).toPass();
 
   const section = daySection(page, date);
+  const toggle = section.locator(".day__header-toggle");
+  if (
+    (await toggle.count()) > 0 &&
+    (await toggle.getAttribute("aria-expanded")) === "false"
+  ) {
+    await toggle.click();
+  }
   await expect(section.locator(`time[datetime="${date}"]`)).toBeVisible();
   await expect(section.locator(".day--loading")).toHaveCount(0);
   return section;
@@ -540,6 +549,7 @@ export async function pressVimNavKey(
     | "o"
     | "O"
     | "u"
+    | "w"
     | "Tab"
     | " "
     | "Enter"
@@ -549,11 +559,11 @@ export async function pressVimNavKey(
 }
 
 export function searchModal(page: Page): Locator {
-  return page.locator(".search-modal--open");
+  return page.locator("dialog.search-modal[open]");
 }
 
 export async function expectSearchClosed(page: Page) {
-  await expect(page.locator(".search-modal--open")).toHaveCount(0);
+  await expect(page.locator("dialog.search-modal[open]")).toHaveCount(0);
 }
 
 export async function openSearch(page: Page) {
@@ -596,11 +606,41 @@ export async function fillSearch(page: Page, query: string) {
 export async function enterSearchNormalMode(page: Page) {
   await searchInput(page).press("Escape");
   await expect(searchModal(page)).toBeVisible();
-  await searchModal(page).locator(".search-modal__panel").focus();
+  await searchModal(page).locator(".modal__panel").focus();
 }
 
 export async function closeSearch(page: Page) {
-  await searchModal(page).locator(".search-modal__panel").focus();
+  await searchModal(page).locator(".modal__panel").focus();
   await page.keyboard.press("Escape");
   await expectSearchClosed(page);
+}
+
+export function rescheduleModal(page: Page): Locator {
+  return page.locator("dialog.reschedule-modal[open]");
+}
+
+export async function expectRescheduleClosed(page: Page) {
+  await expect(page.locator("dialog.reschedule-modal[open]")).toHaveCount(0);
+}
+
+export async function openRescheduleWithShortcut(page: Page) {
+  await page.keyboard.press("w");
+  await expect(rescheduleModal(page)).toBeVisible();
+}
+
+export function rescheduleDateInput(page: Page): Locator {
+  return rescheduleModal(page).getByLabel("Wiedervorlage-Datum");
+}
+
+export async function focusRescheduleModal(page: Page) {
+  await rescheduleModal(page).locator(".modal__panel").focus();
+}
+
+export async function confirmReschedule(page: Page) {
+  await rescheduleModal(page).getByRole("button", { name: "Setzen" }).click();
+}
+
+export async function confirmRescheduleWithShortcut(page: Page) {
+  const modifier = process.platform === "darwin" ? "Meta" : "Control";
+  await page.keyboard.press(`${modifier}+Enter`);
 }

@@ -20,17 +20,24 @@ export function App() {
         return next;
       });
 
-      let attempts = 0;
-      while (attempts < 100) {
+      let mountAttempts = 0;
+      while (mountAttempts < 100) {
+        if (document.querySelector(`section.day[data-date="${day}"]`)) break;
+        await new Promise((resolve) => window.setTimeout(resolve, 50));
+        mountAttempts += 1;
+      }
+
+      let listAttempts = 0;
+      while (listAttempts < 100) {
         const loaded = dayList.data ?? [];
         if (loaded.includes(day)) break;
         if (!dayList.hasNextPage) break;
         await dayList.fetchNextPage();
-        attempts += 1;
+        listAttempts += 1;
       }
 
       document
-        .querySelector(`[data-date="${day}"]`)
+        .querySelector(`section.day[data-date="${day}"]`)
         ?.scrollIntoView({ block: "start" });
 
       await new Promise((resolve) => window.setTimeout(resolve, 150));
@@ -68,7 +75,13 @@ export function App() {
   return (
     <main className="feed">
       {sorted.map((date) => (
-        <DaySection key={date} date={date} isToday={date === today} />
+        <DaySection
+          key={date}
+          date={date}
+          isToday={date === today}
+          isFuture={date > today}
+          forceExpanded={extraDays.has(date)}
+        />
       ))}
       <div ref={sentinelRef} className="feed__sentinel">
         {dayList.isLoading && !dayList.data?.length ? (

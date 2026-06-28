@@ -67,5 +67,5 @@ export function useSearchModal(): SearchModalContextValue {
 }
 
 export function isSearchModalOpen(): boolean {
-  return document.querySelector(".search-modal--open") !== null;
+  return document.querySelector("dialog.search-modal[open]") !== null;
 }

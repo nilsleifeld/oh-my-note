@@ -1,0 +1,115 @@
+@layer components {
+  .modal:not([open]) {
+    display: none;
+  }
+
+  .modal[open] {
+    position: fixed;
+    inset: 0;
+    z-index: 30;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    width: 100%;
+    max-width: none;
+    height: 100%;
+    max-height: none;
+    margin: 0;
+    padding: calc(var(--spacing) * 20) calc(var(--spacing) * 4)
+      calc(var(--spacing) * 4);
+    border: none;
+    background: transparent;
+    overflow: visible;
+  }
+
+  .modal::backdrop {
+    background: hsl(var(--foreground) / 0.35);
+  }
+
+  .modal__panel {
+    display: flex;
+    flex-direction: column;
+    width: min(calc(var(--spacing) * 96), calc(100vw - var(--spacing) * 8));
+    overflow: hidden;
+    border: 1px solid hsl(var(--border));
+    border-radius: var(--radius-lg);
+    background: hsl(var(--background));
+    box-shadow:
+      0 calc(var(--spacing) * 2) calc(var(--spacing) * 6)
+        hsl(var(--foreground) / 0.08),
+      0 calc(var(--spacing) * 6) calc(var(--spacing) * 16)
+        hsl(var(--foreground) / 0.12);
+  }
+
+  .modal__panel--wide {
+    width: min(calc(var(--spacing) * 200), calc(100vw - var(--spacing) * 8));
+    height: min(calc(var(--spacing) * 140), calc(100vh - var(--spacing) * 28));
+  }
+
+  .modal__header {
+    padding: calc(var(--spacing) * 4) calc(var(--spacing) * 4)
+      calc(var(--spacing) * 3);
+    border-bottom: 1px solid hsl(var(--border));
+  }
+
+  .modal__title {
+    margin: 0;
+    font-size: var(--text-lg);
+    line-height: var(--text-lg--line-height);
+    font-weight: 600;
+    color: hsl(var(--foreground));
+  }
+
+  .modal__subtitle {
+    margin: calc(var(--spacing) * 1) 0 0;
+    font-size: var(--text-sm);
+    line-height: var(--text-sm--line-height);
+    color: hsl(var(--muted-foreground));
+  }
+
+  .modal__body {
+    display: flex;
+    flex-direction: column;
+    gap: calc(var(--spacing) * 3);
+    padding: calc(var(--spacing) * 4);
+  }
+
+  .modal__footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: calc(var(--spacing) * 2);
+    padding: calc(var(--spacing) * 3) calc(var(--spacing) * 4)
+      calc(var(--spacing) * 4);
+    border-top: 1px solid hsl(var(--border));
+  }
+
+  .modal__button {
+    padding: calc(var(--spacing) * 2) calc(var(--spacing) * 4);
+    border: 1px solid transparent;
+    border-radius: var(--radius-md);
+    font-size: var(--text-sm);
+    line-height: var(--text-sm--line-height);
+    font-weight: 500;
+    cursor: pointer;
+  }
+
+  .modal__button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .modal__button--secondary {
+    border-color: hsl(var(--border));
+    background: hsl(var(--background));
+    color: hsl(var(--foreground));
+  }
+
+  .modal__button--primary {
+    background: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
+  }
+
+  .modal__button--primary:not(:disabled):hover {
+    background: hsl(var(--primary) / 0.9);
+  }
+}

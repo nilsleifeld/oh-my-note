@@ -9,15 +9,27 @@ import { DaySectionSkeleton } from "./ui/Skeleton";
 type DaySectionProps = {
   date: string;
   isToday: boolean;
+  isFuture: boolean;
+  forceExpanded?: boolean;
 };
 
-export function DaySection({ date, isToday }: DaySectionProps) {
+export function DaySection({
+  date,
+  isToday,
+  isFuture,
+  forceExpanded = false,
+}: DaySectionProps) {
   const [visible, setVisible] = useState(isToday);
+  const [expanded, setExpanded] = useState(
+    isToday || (isFuture && forceExpanded),
+  );
   const sectionRef = useRef<HTMLElement>(null);
   const drag = useDrag();
 
+  const isExpanded = isToday || (isFuture ? expanded : visible);
+
   const rootBlocksQuery = useDayRootBlocks(date, {
-    enabled: isToday || visible,
+    enabled: isExpanded,
   });
   const { rowProps, addChild, getRootIds } = useBlockTree({
     date,
@@ -25,7 +37,48 @@ export function DaySection({ date, isToday }: DaySectionProps) {
   });
 
   useEffect(() => {
-    if (isToday || visible) return;
+    if (forceExpanded) setExpanded(true);
+  }, [forceExpanded]);
+
+  const toggleExpanded = () => setExpanded((current) => !current);
+
+  const dayHeader = (collapsible: boolean, isHeaderExpanded: boolean) => (
+    <header
+      className={
+        collapsible && !isHeaderExpanded
+          ? "day__header day__header--collapsed"
+          : "day__header"
+      }
+    >
+      {collapsible ? (
+        <button
+          type="button"
+          className="day__header-toggle"
+          aria-expanded={isHeaderExpanded}
+          onClick={toggleExpanded}
+        >
+          <span className="day__header-line">
+            <span className="day__divider" aria-hidden="true" />
+            <time className="day__date" dateTime={date}>
+              {formatDayTitle(date)}
+            </time>
+            <span className="day__divider" aria-hidden="true" />
+          </span>
+        </button>
+      ) : (
+        <div className="day__header-line">
+          <span className="day__divider" aria-hidden="true" />
+          <time className="day__date" dateTime={date}>
+            {formatDayTitle(date)}
+          </time>
+          <span className="day__divider" aria-hidden="true" />
+        </div>
+      )}
+    </header>
+  );
+
+  useEffect(() => {
+    if (isToday || isFuture || visible) return;
 
     const el = sectionRef.current;
     if (!el) return;
@@ -40,9 +93,21 @@ export function DaySection({ date, isToday }: DaySectionProps) {
     );
     observer.observe(el);
     return () => observer.disconnect();
-  }, [isToday, visible]);
+  }, [isFuture, isToday, visible]);
 
-  if (!isToday && !visible) {
+  if (isFuture && !expanded) {
+    return (
+      <section
+        ref={sectionRef}
+        className="day day--future day--collapsed"
+        data-date={date}
+      >
+        <div className="day__inner">{dayHeader(true, false)}</div>
+      </section>
+    );
+  }
+
+  if (!isToday && !isFuture && !visible) {
     return (
       <section ref={sectionRef} className="day" data-date={date}>
         <div className="day__placeholder">{formatDayTitle(date)}</div>
@@ -77,19 +142,13 @@ export function DaySection({ date, isToday }: DaySectionProps) {
   return (
     <section
       ref={sectionRef}
-      className={isToday ? "day day--today" : "day"}
+      className={
+        isToday ? "day day--today" : isFuture ? "day day--future" : "day"
+      }
       data-date={date}
     >
       <div className="day__inner">
-        <header className="day__header">
-          <div className="day__header-line">
-            <span className="day__divider" aria-hidden="true" />
-            <time className="day__date" dateTime={date}>
-              {formatDayTitle(date)}
-            </time>
-            <span className="day__divider" aria-hidden="true" />
-          </div>
-        </header>
+        {dayHeader(isFuture, true)}
         <div
           className="day__blocks"
           onDragOver={(e) => {

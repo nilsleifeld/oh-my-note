@@ -303,10 +303,9 @@ test.describe("Globale Block-Suche", () => {
   test("öffnet zugeklappte Toggle-Vorfahren beim Springen", async ({
     page,
   }) => {
-    const toggle = page.locator('[data-block-id="search-toggle"]');
-    await expect(toggle.locator(".block__toggle")).toHaveClass(
-      /block__toggle--closed/,
-    );
+    const toggle = page.locator('[data-block-id="search-toggle"]').first();
+    const toggleButton = toggle.locator("button.block__toggle");
+    await expect(toggleButton).toHaveClass(/block__toggle--closed/);
     await expect(toggle.locator("> .block__children")).toHaveCount(0);
 
     await openSearch(page);
@@ -314,9 +313,7 @@ test.describe("Globale Block-Suche", () => {
     await searchInput(page).press("Enter");
 
     await expectSearchClosed(page);
-    await expect(toggle.locator(".block__toggle")).toHaveClass(
-      /block__toggle--open/,
-    );
+    await expect(toggleButton).toHaveClass(/block__toggle--open/);
     await expect(
       toggle.locator('[data-block-id="search-hidden"]'),
     ).toBeVisible();

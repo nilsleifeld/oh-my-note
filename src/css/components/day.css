@@ -57,6 +57,28 @@
     color: hsl(var(--muted-foreground));
   }
 
+  .day__header-toggle {
+    display: block;
+    width: 100%;
+    padding: 0;
+    border: none;
+    background: transparent;
+    font: inherit;
+    cursor: pointer;
+    color: inherit;
+  }
+
+  .day__header-toggle:focus-visible .day__header-line {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: calc(var(--spacing) * 1);
+    border-radius: var(--radius-sm);
+  }
+
+  .day--collapsed .day__header,
+  .day__header--collapsed {
+    margin-bottom: 0;
+  }
+
   .day__blocks {
     display: flex;
     flex-direction: column;

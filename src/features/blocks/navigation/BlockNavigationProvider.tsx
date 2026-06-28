@@ -64,7 +64,11 @@ function isPopoverOpen(): boolean {
 }
 
 function isSearchModalOpen(): boolean {
-  return document.querySelector(".search-modal--open") !== null;
+  return document.querySelector("dialog.search-modal[open]") !== null;
+}
+
+function isRescheduleModalOpen(): boolean {
+  return document.querySelector("dialog.reschedule-modal[open]") !== null;
 }
 
 const CHORD_PREFIX_TIMEOUT_MS = 1000;
@@ -393,7 +397,12 @@ export function BlockNavigationProvider({ children }: { children: ReactNode }) {
         event.key.toLowerCase() === "r"
       ) {
         if (isBlockEditTarget(target)) return;
-        if (isTextEntryTarget(target) || isPopoverOpen() || isSearchModalOpen())
+        if (
+          isTextEntryTarget(target) ||
+          isPopoverOpen() ||
+          isSearchModalOpen() ||
+          isRescheduleModalOpen()
+        )
           return;
 
         event.preventDefault();
@@ -412,7 +421,12 @@ export function BlockNavigationProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      if (isTextEntryTarget(target) || isPopoverOpen() || isSearchModalOpen())
+      if (
+        isTextEntryTarget(target) ||
+        isPopoverOpen() ||
+        isSearchModalOpen() ||
+        isRescheduleModalOpen()
+      )
         return;
 
       if (event.key === "Tab") {
@@ -577,7 +591,9 @@ export function BlockNavigationProvider({ children }: { children: ReactNode }) {
 
       const target = event.target;
       if (!(target instanceof HTMLElement)) return;
-      if (target.closest(".app-header, .app-footer, .popover, .search-modal"))
+      if (
+        target.closest(".app-header, .app-footer, .popover, dialog.modal[open]")
+      )
         return;
       if (isTextEntryTarget(target)) return;
 

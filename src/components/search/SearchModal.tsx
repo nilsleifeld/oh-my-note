@@ -5,7 +5,6 @@ import {
   useState,
   type KeyboardEvent,
 } from "react";
-import { createPortal } from "react-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { blockTypeOptions } from "../../data/blocks";
 import { useBlockNavigation } from "../../features/blocks/navigation/BlockNavigationProvider";
@@ -15,6 +14,7 @@ import { useSearchModal } from "../../features/search/SearchModalProvider";
 import { useBlockSearch } from "../../features/search/useBlockSearch";
 import { formatDayShort } from "../../utils/date";
 import { highlightMatches } from "../../utils/highlightMatches";
+import { Modal } from "../ui/Modal";
 import { SearchPreview } from "./SearchPreview";
 
 type SearchMode = "insert" | "normal";
@@ -56,6 +56,7 @@ export function SearchModal() {
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
+  const modeRef = useRef(mode);
 
   const results = searchQuery.data?.items ?? [];
   const searchableCount = searchQuery.data?.searchableTotal ?? 0;
@@ -63,11 +64,20 @@ export function SearchModal() {
   const isError = searchQuery.isError;
   const selected = results[highlight];
 
+  useEffect(() => {
+    modeRef.current = mode;
+  }, [mode]);
+
   const reset = useCallback(() => {
     setQuery("");
     setHighlight(0);
     setMode("insert");
   }, []);
+
+  const handleClose = useCallback(() => {
+    close();
+    reset();
+  }, [close, reset]);
 
   const scrollHighlight = useCallback(() => {
     listRef.current
@@ -91,8 +101,7 @@ export function SearchModal() {
 
   const confirmBlock = useCallback(
     async (blockId: string) => {
-      close();
-      reset();
+      handleClose();
 
       await jumpToBlock({
         queryClient,
@@ -101,7 +110,7 @@ export function SearchModal() {
         navigateToBlock,
       });
     },
-    [close, getFeedController, navigateToBlock, queryClient, reset],
+    [getFeedController, handleClose, navigateToBlock, queryClient],
   );
 
   const confirmSelection = useCallback(async () => {
@@ -122,15 +131,16 @@ export function SearchModal() {
     setHighlight(0);
   }, [query]);
 
-  useEffect(() => {
-    if (!isOpen) return;
-
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = previousOverflow;
-    };
-  }, [isOpen]);
+  const onCancel = useCallback((event: Event) => {
+    if (modeRef.current === "insert") {
+      event.preventDefault();
+      inputRef.current?.blur();
+      setMode("normal");
+      requestAnimationFrame(() => {
+        panelRef.current?.focus();
+      });
+    }
+  }, []);
 
   const onPanelKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     event.stopPropagation();
@@ -183,127 +193,104 @@ export function SearchModal() {
     if (event.key === "Enter") {
       event.preventDefault();
       void confirmSelection();
-      return;
-    }
-    if (event.key === "Escape") {
-      event.preventDefault();
-      close();
-      reset();
     }
   };
 
-  if (!isOpen) return null;
-
-  return createPortal(
-    <div
-      className="search-modal search-modal--open"
-      role="presentation"
-      onMouseDown={(event) => {
-        if (event.target === event.currentTarget) {
-          close();
-          reset();
-        }
-      }}
+  return (
+    <Modal
+      open={isOpen}
+      onClose={handleClose}
+      ariaLabel="Search blocks"
+      className="search-modal"
+      panelClassName="modal__panel--wide"
+      panelRef={panelRef}
+      onCancel={onCancel}
+      onKeyDown={onPanelKeyDown}
     >
-      <div
-        ref={panelRef}
-        className="search-modal__panel"
-        role="dialog"
-        aria-modal="true"
-        aria-label="Search blocks"
-        tabIndex={-1}
-        onKeyDown={onPanelKeyDown}
-      >
-        <div className="search-modal__search">
-          <SearchGlyph />
-          <input
-            ref={inputRef}
-            className="search-modal__input"
-            type="search"
-            value={query}
-            placeholder="Search blocks…"
-            aria-label="Search blocks"
-            onFocus={() => setMode("insert")}
-            onChange={(event) => setQuery(event.target.value)}
-          />
-          <span className="search-modal__count" aria-live="polite">
-            {results.length} / {searchableCount}
-          </span>
-        </div>
+      <div className="search-modal__search">
+        <SearchGlyph />
+        <input
+          ref={inputRef}
+          className="search-modal__input"
+          type="search"
+          value={query}
+          placeholder="Search blocks…"
+          aria-label="Search blocks"
+          onFocus={() => setMode("insert")}
+          onChange={(event) => setQuery(event.target.value)}
+        />
+        <span className="search-modal__count" aria-live="polite">
+          {results.length} / {searchableCount}
+        </span>
+      </div>
 
-        <div className="search-modal__layout">
-          <div className="search-modal__results-wrap">
-            {isLoading ? (
-              <p className="search-modal__status">Searching…</p>
-            ) : isError ? (
-              <p className="search-modal__status search-modal__status--error">
-                Could not load blocks.
-              </p>
-            ) : (
-              <ul
-                ref={listRef}
-                className="search-modal__results"
-                role="listbox"
-              >
-                {!results.length ? (
-                  <li className="search-modal__empty">No matches</li>
-                ) : (
-                  results.map((result, index) => {
-                    const isHighlighted = index === highlight;
-                    return (
-                      <li
-                        key={result.block.id}
-                        className={
-                          isHighlighted
-                            ? "search-modal__option search-modal__option--highlighted"
-                            : "search-modal__option"
-                        }
-                        role="option"
-                        aria-selected={isHighlighted}
-                        onMouseEnter={() => setHighlight(index)}
-                        onClick={() => {
-                          setHighlight(index);
-                          void confirmBlock(result.block.id);
-                        }}
-                      >
-                        <span className="search-modal__option-body">
-                          <span className="search-modal__option-title">
-                            {result.indices.length
-                              ? highlightMatches(
-                                  result.block.properties.title,
-                                  result.indices,
-                                )
-                              : result.block.properties.title}
-                          </span>
-                          <span className="search-modal__option-meta">
-                            {formatDayShort(result.block.day)} ·{" "}
-                            {blockTypeLabel(result.block.type)}
-                          </span>
-                        </span>
-                      </li>
-                    );
-                  })
-                )}
-              </ul>
-            )}
-          </div>
-
-          {selected ? (
-            <SearchPreview
-              day={selected.block.day}
-              highlightBlockId={selected.block.id}
-              matchIndices={selected.indices}
-            />
+      <div className="search-modal__layout">
+        <div className="search-modal__results-wrap">
+          {isLoading ? (
+            <p className="search-modal__status">Searching…</p>
+          ) : isError ? (
+            <p className="search-modal__status search-modal__status--error">
+              Could not load blocks.
+            </p>
           ) : (
-            <div className="search-modal__preview search-modal__preview--empty">
-              <div className="search-modal__preview-body search-modal__preview-body--empty">
-                Select a result to preview
-              </div>
-            </div>
+            <ul ref={listRef} className="search-modal__results" role="listbox">
+              {!results.length ? (
+                <li className="search-modal__empty">No matches</li>
+              ) : (
+                results.map((result, index) => {
+                  const isHighlighted = index === highlight;
+                  return (
+                    <li
+                      key={result.block.id}
+                      className={
+                        isHighlighted
+                          ? "search-modal__option search-modal__option--highlighted"
+                          : "search-modal__option"
+                      }
+                      role="option"
+                      aria-selected={isHighlighted}
+                      onMouseEnter={() => setHighlight(index)}
+                      onClick={() => {
+                        setHighlight(index);
+                        void confirmBlock(result.block.id);
+                      }}
+                    >
+                      <span className="search-modal__option-body">
+                        <span className="search-modal__option-title">
+                          {result.indices.length
+                            ? highlightMatches(
+                                result.block.properties.title,
+                                result.indices,
+                              )
+                            : result.block.properties.title}
+                        </span>
+                        <span className="search-modal__option-meta">
+                          {formatDayShort(result.block.day)} ·{" "}
+                          {blockTypeLabel(result.block.type)}
+                        </span>
+                      </span>
+                    </li>
+                  );
+                })
+              )}
+            </ul>
           )}
         </div>
+
+        {selected ? (
+          <SearchPreview
+            day={selected.block.day}
+            highlightBlockId={selected.block.id}
+            matchIndices={selected.indices}
+          />
+        ) : (
+          <div className="search-modal__preview search-modal__preview--empty">
+            <div className="search-modal__preview-body search-modal__preview-body--empty">
+              Select a result to preview
+            </div>
+          </div>
+        )}
       </div>
-    </div>,
-    document.body,
+    </Modal>
   );
 }

@@ -11,8 +11,10 @@ import { App } from "./components/App";
 import { AppFooter } from "./components/AppFooter";
 import { AppHeader } from "./components/AppHeader";
 import { SearchModal } from "./components/search/SearchModal";
+import { RescheduleModal } from "./components/reschedule/RescheduleModal";
 import { FeedJumpProvider } from "./features/search/FeedJumpProvider";
 import { SearchModalProvider } from "./features/search/SearchModalProvider";
+import { RescheduleModalProvider } from "./features/blocks/reschedule/RescheduleModalProvider";
 import "./css/main.css";
 
 const queryClient = new QueryClient({
@@ -30,12 +32,15 @@ function AppShell() {
   return (
     <FeedJumpProvider>
       <SearchModalProvider>
-        <div className={appViewClassName}>
-          <AppHeader />
-          <App />
-          <AppFooter />
-          <SearchModal />
-        </div>
+        <RescheduleModalProvider>
+          <div className={appViewClassName}>
+            <AppHeader />
+            <App />
+            <AppFooter />
+            <SearchModal />
+            <RescheduleModal />
+          </div>
+        </RescheduleModalProvider>
       </SearchModalProvider>
     </FeedJumpProvider>
   );

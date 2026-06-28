@@ -350,3 +350,33 @@ export function collectDescendantIds(
   }
   return ids;
 }
+
+export function buildRescheduleToDayUpdates(
+  blockId: string,
+  sourceBlocks: Block[],
+  targetDate: string,
+  targetBlocks: Block[],
+): Block[] | null {
+  const block = sourceBlocks.find((entry) => entry.id === blockId);
+  if (!block || block.day === targetDate) return null;
+
+  const targetRoots = sortRootBlocks(targetBlocks, targetDate);
+  const lastRoot = targetRoots.at(-1);
+  const newSortKey = sortKeyBetween(lastRoot?.sortKey ?? null, null);
+
+  const subtreeIds = [blockId, ...collectDescendantIds(blockId, sourceBlocks)];
+  const updates: Block[] = [];
+
+  for (const id of subtreeIds) {
+    const entry = sourceBlocks.find((candidate) => candidate.id === id);
+    if (!entry) continue;
+
+    updates.push({
+      ...entry,
+      day: targetDate,
+      ...(id === blockId ? { parentId: null, sortKey: newSortKey } : {}),
+    });
+  }
+
+  return updates.length ? updates : null;
+}

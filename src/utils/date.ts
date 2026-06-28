@@ -29,6 +29,20 @@ export function shiftDate(date: string, days: number): string {
   return d.toISOString().slice(0, 10);
 }
 
+export function isFutureDate(
+  date: string,
+  referenceDate = todayISO(),
+): boolean {
+  return date > referenceDate;
+}
+
+export function rescheduleDateFromShortcut(
+  shortcut: number,
+  referenceDate = todayISO(),
+): string {
+  return shiftDate(referenceDate, shortcut);
+}
+
 export function formatCommentRelative(iso: string, now = Date.now()): string {
   const then = new Date(iso).getTime();
   const diffMs = Math.max(0, now - then);

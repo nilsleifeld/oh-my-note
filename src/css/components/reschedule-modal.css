@@ -1,0 +1,30 @@
+@layer components {
+  .reschedule-modal__field {
+    display: flex;
+    flex-direction: column;
+    gap: calc(var(--spacing) * 1.5);
+  }
+
+  .reschedule-modal__label {
+    font-size: var(--text-sm);
+    line-height: var(--text-sm--line-height);
+    font-weight: 500;
+    color: hsl(var(--foreground));
+  }
+
+  .reschedule-modal__date-input {
+    width: 100%;
+    padding: calc(var(--spacing) * 2) calc(var(--spacing) * 3);
+    border: 1px solid hsl(var(--border));
+    border-radius: var(--radius-md);
+    background: hsl(var(--background));
+    font-size: var(--text-base);
+    line-height: var(--text-base--line-height);
+    color: hsl(var(--foreground));
+  }
+
+  .reschedule-modal__date-input:focus {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 2px;
+  }
+}
