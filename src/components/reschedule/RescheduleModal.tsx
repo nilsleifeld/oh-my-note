@@ -114,7 +114,7 @@ export function RescheduleModal() {
   const onPanelKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     event.stopPropagation();
 
-    if (event.metaKey && event.key === "Enter") {
+    if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
       event.preventDefault();
       void submit();
       return;
@@ -124,7 +124,7 @@ export function RescheduleModal() {
   };
 
   const onDateInputKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
-    if (event.metaKey && event.key === "Enter") {
+    if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
       event.preventDefault();
       void submit();
       return;
